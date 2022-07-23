@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: cvmatrix
+Version: 0.1
+Summary: cvmatrix is research platform for object detection and segmentation.
+Home-page: https://github.com/hengguan/cvmatrix
+Author: GuanHeng
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.7
+Provides-Extra: all
+Provides-Extra: dev
+
+UNKNOWN
+
