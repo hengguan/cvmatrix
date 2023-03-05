@@ -1,0 +1,101 @@
+logger:
+  project: cross_view_transformers_test
+  uuid: ${now:%m%d_%H%M%S}
+  save_dir: ${hydra:runtime.cwd}/logs/
+  seed: 2022
+  checkpoint_interval: 1000
+  log_image_interval: 500
+resume: false
+eval: false
+num_gpus: 1
+num_machines: 1
+machine_rank: 0
+dist_url: tcp://127.0.0.1
+model:
+  _target_: cvmatrix.model.detector.retinanet.RetinaNet
+  backbone:
+    _target_: cvmatrix.model.backbone.resnet.ResNet
+    stem:
+      _target_: cvmatrix.model.backbone.BasicStem
+      stages:
+        _target_: cvmatrix.model.backbone.resnet.ResNet.make_default_stages
+        depth: 50
+        stride_in_1x1: true
+        norm: FrozenBN
+      out_features:
+      - res3
+      - res4
+      - res5
+  neck:
+    _target_: cvmatrix.model.neck.FPN
+    in_features:
+    - res3
+    - res4
+    - res5
+    out_channels: 256
+    top_block:
+      _target_: LastLevelP6P7
+      in_channels: 2048
+      out_channels: ${..out_channels}
+  head:
+    _target_: cvmatrix.model.head.RetinaNetHead
+    input_shape:
+    - 256
+    num_classes: ${..num_classes}
+    conv_dims:
+    - 256
+    - 256
+    - 256
+    - 256
+    prior_prob: 0.01
+    num_anchors: 9
+  anchor_generator:
+    _target_: DefaultAnchorGenerator
+    sizes:
+    - - 32
+      - 64
+      - 128
+      - 256
+      - 512
+    aspect_ratios:
+    - 0.5
+    - 1.0
+    - 2.0
+    strides:
+    - 8
+    - 16
+    - 32
+    - 64
+    - 128
+    offset: 0.0
+  box2box_transform:
+    _target_: Box2BoxTransform
+    weights:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+  anchor_matcher:
+    _target_: Matcher
+    thresholds:
+    - 0.4
+    - 0.5
+    labels:
+    - 0
+    - -1
+    - 1
+    allow_low_quality_matches: true
+  num_classes: 80
+  head_in_features:
+  - p3
+  - p4
+  - p5
+  - p6
+  - p7
+  focal_loss_alpha: 0.25
+  focal_loss_gamma: 2.0
+  pixel_mean: constants.imagenet_bgr256_mean
+  pixel_std: constants.imagenet_bgr256_std
+  input_format: BGR
+data:
+  data_root: /mnt/d/data/nuscenes/v1.0-trainval/

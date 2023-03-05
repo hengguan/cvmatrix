@@ -1,0 +1,50 @@
+defaults:
+  - _self_
+
+  - model: null
+  - data: ???
+  - visualization: null
+
+  - loss: null
+  - metrics: null
+
+logger:
+  project: cross_view_transformers_test               # wandb project
+  uuid: ${now:%m%d_%H%M%S}                            # model name
+  save_dir: ${hydra:runtime.cwd}/logs/                # log directory, will be created
+
+  seed: 2022
+  checkpoint_interval: 1000
+  log_image_interval: 500
+
+resume: false
+eval: false
+num_gpus: 1
+num_machines: 1
+machine_rank: 0
+dist_url: "tcp://127.0.0.1"
+
+loader:
+  batch_size: 4
+  num_workers: 4
+  pin_memory: True
+  prefetch_factor: 4
+
+# AdamW
+optimizer:
+  lr: 4e-3
+  weight_decay: 1e-7
+
+# OneCycleLR
+scheduler:
+  div_factor: 10                                      # starts at lr / 10
+  pct_start: 0.3                                      # reaches lr at 30% of total steps
+  final_div_factor: 10                                # ends at lr / 10 / 10
+  max_lr: ${optimizer.lr}
+  total_steps: ${trainer.max_steps}
+  cycle_momentum: False
+
+trainer:
+  max_steps: 24
+  log_every_n_steps: 50
+  gpus: -1

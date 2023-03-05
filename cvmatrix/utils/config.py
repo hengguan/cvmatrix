@@ -9,20 +9,37 @@ import logging
 import functools
 import os
 import uuid
+from pathlib import Path
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import is_dataclass
 import collections.abc as abc
 import dataclasses
-from typing import List, Tuple, Union, Any
+from typing import List, Tuple, Union, Any, Optional
 import cloudpickle
 import yaml
 from omegaconf import DictConfig, ListConfig, OmegaConf, SCMode
+from collections.abc import Callable
 
 from cvmatrix.utils.file_io import PathManager
 from cvmatrix.utils.registry import _convert_target_to_string, locate
 
-__all__ = ["dump_dataclass", "instantiate", "LazyCall", "LazyConfig", "configurable"]
+__all__ = [
+    "dump_dataclass", "instantiate", "LazyCall", 
+    "LazyConfig", "configurable", "setup_config"]
+
+
+def setup_config(cfg: DictConfig, override: Optional[Callable] = None):
+    OmegaConf.set_struct(cfg, False)
+
+    if override is not None:
+        override(cfg)
+
+    OmegaConf.resolve(cfg)
+    OmegaConf.set_struct(cfg, True)
+
+    save_dir = Path(cfg.logger.save_dir)
+    save_dir.mkdir(parents=False, exist_ok=True)
 
 
 def configurable(init_func=None, *, from_config=None):
@@ -111,6 +128,24 @@ def configurable(init_func=None, *, from_config=None):
             return wrapped
 
         return wrapper
+
+
+def _called_with_cfg(*args, **kwargs):
+    """
+    Returns:
+        bool: whether the arguments contain CfgNode and should be considered
+            forwarded to from_config.
+    """
+    from omegaconf import DictConfig
+    from fvcore.common.config import CfgNode as _CfgNode
+
+    if len(args) and isinstance(args[0], (_CfgNode, DictConfig)):
+        return True
+    if isinstance(kwargs.pop("cfg", None), (_CfgNode, DictConfig)):
+        return True
+    # `from_config`'s first argument is forced to be "cfg".
+    # So the above check covers all cases.
+    return False
 
 
 def dump_dataclass(obj: Any):

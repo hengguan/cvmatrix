@@ -1,0 +1,2 @@
+- +experiment=retinanet_r50_fpn_1x
+- data.data_root=/mnt/d/data/coco/tiny-coco/

@@ -1,123 +1,156 @@
 #!/usr/bin/env python
 # Copyright (c) Facebook, Inc. and its affiliates.
 """
-Training script using the new "LazyConfig" python config files.
+cvmatrix training script with a plain training loop.
 
-This scripts reads a given python config file and runs the training or evaluation.
-It can be used to train any models or dataset as long as they can be
-instantiated by the recursive construction defined in the given config file.
+This script reads a given config file and runs the training or evaluation.
+It is an entry point that is able to train standard models in cvmatrix.
 
-Besides lazy construction of models, dataloader, etc., this scripts expects a
-few common configuration parameters currently defined in "configs/common/train.py".
-To add more complicated training logic, you can easily add other configs
-in the config file and implement a new train_net.py to handle them.
+In order to let one script support training of many models,
+this script contains logic that are specific to these built-in models and therefore
+may not be suitable for your own project.
+For example, your research project perhaps only needs a single "evaluator".
+
+Therefore, we recommend you to use cvmatrix as a library and take
+this file as an example of how to use the library.
+You may want to write your own script with your datasets and other customizations.
+
+Compared to "train_net.py", this script supports fewer default features.
+It also includes fewer abstraction, therefore is easier to add custom logic.
 """
+
 import argparse
 import logging
-import sys
+import os
+from collections import OrderedDict
+import torch
+from torch.nn.parallel import DistributedDataParallel
 
-from cvmatrix.engine.checkpoint import DetectionCheckpointer
-from cvmatrix.utils.config import LazyConfig, instantiate
-from cvmatrix.engine import (
-    AMPTrainer,
-    SimpleTrainer,
-    default_setup,
-    default_writers,
-    hooks,
-    launch,
+import cvmatrix.utils.comm as comm
+from cvmatrix.checkpoint import DetectionCheckpointer, PeriodicCheckpointer
+from cvmatrix.config import get_cfg
+from cvmatrix.data import (
+    MetadataCatalog,
+    build_detection_test_loader,
+    build_detection_train_loader,
 )
-from cvmatrix.engine.defaults import create_ddp_model
-# from cvmatrix.evaluation import inference_on_dataset, print_csv_format
-from cvmatrix.utils import comm
+from cvmatrix.engine import default_setup, default_writers, launch
+from cvmatrix.modeling import build_model
+from cvmatrix.solver import build_lr_scheduler, build_optimizer
+from cvmatrix.utils.events import EventStorage
 
 logger = logging.getLogger("cvmatrix")
 
 
 def do_test(cfg, model):
-    if "evaluator" in cfg.dataloader:
-        ret = inference_on_dataset(
-            model, instantiate(cfg.dataloader.test), instantiate(cfg.dataloader.evaluator)
+    results = OrderedDict()
+    for dataset_name in cfg.DATASETS.TEST:
+        data_loader = build_detection_test_loader(cfg, dataset_name)
+        evaluator = get_evaluator(
+            cfg, dataset_name, os.path.join(cfg.OUTPUT_DIR, "inference", dataset_name)
         )
-        print_csv_format(ret)
-        return ret
+        results_i = inference_on_dataset(model, data_loader, evaluator)
+        results[dataset_name] = results_i
+        if comm.is_main_process():
+            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+            print_csv_format(results_i)
+    if len(results) == 1:
+        results = list(results.values())[0]
+    return results
 
 
-def do_train(args, cfg):
-    """
-    Args:
-        cfg: an object with the following attributes:
-            model: instantiate to a module
-            dataloader.{train,test}: instantiate to dataloaders
-            dataloader.evaluator: instantiate to evaluator for test set
-            optimizer: instantaite to an optimizer
-            lr_multiplier: instantiate to a fvcore scheduler
-            train: other misc config defined in `configs/common/train.py`, including:
-                output_dir (str)
-                init_checkpoint (str)
-                amp.enabled (bool)
-                max_iter (int)
-                eval_period, log_period (int)
-                device (str)
-                checkpointer (dict)
-                ddp (dict)
-    """
-    model = instantiate(cfg.model)
-    logger = logging.getLogger("cvmatrix")
-    logger.info("Model:\n{}".format(model))
-    model.to(cfg.train.device)
+def do_train(cfg, model, resume=False):
+    model.train()
+    optimizer = build_optimizer(cfg, model)
+    scheduler = build_lr_scheduler(cfg, optimizer)
 
-    cfg.optimizer.params.model = model
-    optim = instantiate(cfg.optimizer)
-
-    train_loader = instantiate(cfg.dataloader.train)
-
-    model = create_ddp_model(model, **cfg.train.ddp)
-    trainer = (AMPTrainer if cfg.train.amp.enabled else SimpleTrainer)(model, train_loader, optim)
     checkpointer = DetectionCheckpointer(
-        model,
-        cfg.train.output_dir,
-        trainer=trainer,
+        model, cfg.OUTPUT_DIR, optimizer=optimizer, scheduler=scheduler
     )
-    trainer.register_hooks(
-        [
-            hooks.IterationTimer(),
-            hooks.LRScheduler(scheduler=instantiate(cfg.lr_multiplier)),
-            hooks.PeriodicCheckpointer(checkpointer, **cfg.train.checkpointer)
-            if comm.is_main_process()
-            else None,
-            hooks.EvalHook(cfg.train.eval_period, lambda: do_test(cfg, model)),
-            hooks.PeriodicWriter(
-                default_writers(cfg.train.output_dir, cfg.train.max_iter),
-                period=cfg.train.log_period,
-            )
-            if comm.is_main_process()
-            else None,
-        ]
+    start_iter = (
+        checkpointer.resume_or_load(cfg.MODEL.WEIGHTS, resume=resume).get("iteration", -1) + 1
+    )
+    max_iter = cfg.SOLVER.MAX_ITER
+
+    periodic_checkpointer = PeriodicCheckpointer(
+        checkpointer, cfg.SOLVER.CHECKPOINT_PERIOD, max_iter=max_iter
     )
 
-    checkpointer.resume_or_load(cfg.train.init_checkpoint, resume=args.resume)
-    if args.resume and checkpointer.has_checkpoint():
-        # The checkpoint stores the training iteration that just finished, thus we start
-        # at the next iteration
-        start_iter = trainer.iter + 1
-    else:
-        start_iter = 0
-    trainer.train(start_iter, cfg.train.max_iter)
+    writers = default_writers(cfg.OUTPUT_DIR, max_iter) if comm.is_main_process() else []
+
+    # compared to "train_net.py", we do not support accurate timing and
+    # precise BN here, because they are not trivial to implement in a small training loop
+    data_loader = build_detection_train_loader(cfg)
+    logger.info("Starting training from iteration {}".format(start_iter))
+    with EventStorage(start_iter) as storage:
+        for data, iteration in zip(data_loader, range(start_iter, max_iter)):
+            storage.iter = iteration
+
+            loss_dict = model(data)
+            losses = sum(loss_dict.values())
+            assert torch.isfinite(losses).all(), loss_dict
+
+            loss_dict_reduced = {k: v.item() for k, v in comm.reduce_dict(loss_dict).items()}
+            losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+            if comm.is_main_process():
+                storage.put_scalars(total_loss=losses_reduced, **loss_dict_reduced)
+
+            optimizer.zero_grad()
+            losses.backward()
+            optimizer.step()
+            storage.put_scalar("lr", optimizer.param_groups[0]["lr"], smoothing_hint=False)
+            scheduler.step()
+
+            if (
+                cfg.TEST.EVAL_PERIOD > 0
+                and (iteration + 1) % cfg.TEST.EVAL_PERIOD == 0
+                and iteration != max_iter - 1
+            ):
+                do_test(cfg, model)
+                # Compared to "train_net.py", the test results are not dumped to EventStorage
+                comm.synchronize()
+
+            if iteration - start_iter > 5 and (
+                (iteration + 1) % 20 == 0 or iteration == max_iter - 1
+            ):
+                for writer in writers:
+                    writer.write()
+            periodic_checkpointer.step(iteration)
+
+
+def setup(args):
+    """
+    Create configs and perform basic setups.
+    """
+    cfg = get_cfg()
+    cfg.merge_from_file(args.config_file)
+    cfg.merge_from_list(args.opts)
+    cfg.freeze()
+    default_setup(
+        cfg, args
+    )  # if you don't like any of the default setup, write your own setup code
+    return cfg
 
 
 def main(args):
-    cfg = LazyConfig.load(args.config_file)
-    cfg = LazyConfig.apply_overrides(cfg, args.opts)
-    default_setup(cfg, args)
+    cfg = setup(args)
 
+    model = build_model(cfg)
+    logger.info("Model:\n{}".format(model))
     if args.eval_only:
-        model = instantiate(cfg.model)
-        model.to(cfg.train.device)
-        model = create_ddp_model(model)
-        DetectionCheckpointer(model).load(cfg.train.init_checkpoint)
-        print(do_test(cfg, model))
-    else:
-        do_train(args, cfg)
+        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+            cfg.MODEL.WEIGHTS, resume=args.resume
+        )
+        return do_test(cfg, model)
+
+    distributed = comm.get_world_size() > 1
+    if distributed:
+        model = DistributedDataParallel(
+            model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
+        )
+
+    do_train(cfg, model, resume=args.resume)
+    return do_test(cfg, model)
 
 
 def default_argument_parser(epilog=None):
@@ -186,6 +219,7 @@ For python-based LazyConfig, use "path.key=value".
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
+    print("Command Line Args:", args)
     launch(
         main,
         args.num_gpus,

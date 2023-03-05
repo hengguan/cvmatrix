@@ -153,7 +153,7 @@ setup(
     "platform for object detection and segmentation.",
     packages=find_packages(exclude=("configs", "tests*")),
     package_dir="",
-    package_data={"cvmatrix.model_zoo": get_model_zoo_configs()},
+    package_data={},
     python_requires=">=3.7",
     install_requires=[
         # These dependencies are not pure-python.
@@ -161,7 +161,7 @@ setup(
         # guaranteed to be installable by `pip install` on all platforms.
         # To tell if a package is pure-python, go to https://pypi.org/project/{name}/#files
         "Pillow>=7.1",  # or use pillow-simd for better performance
-        "matplotlib",  # TODO move it to optional after we add opencv visualization
+        # "matplotlib",  # TODO move it to optional after we add opencv visualization
         # "pycocotools>=2.0.2",  # corresponds to https://github.com/ppwwyyxx/cocoapi
         # Do not add opencv here. Just like pytorch, user should install
         # opencv themselves, preferrably by OS's package manager, or by
