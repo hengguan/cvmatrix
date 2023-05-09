@@ -1,0 +1,841 @@
+[05/05 20:14:57] cvmatrix INFO: Rank of current process: 0. World size: 1
+[05/05 20:14:57] cvmatrix INFO: Environment info:
+----------------------  --------------------------------------------------------------------------------------
+sys.platform            linux
+Python                  3.8.16 (default, Mar  2 2023, 03:21:46) [GCC 11.2.0]
+numpy                   1.24.3
+detectron2              failed to import
+detectron2._C           not built correctly: No module named 'detectron2'
+Compiler ($CXX)         c++ (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
+CUDA compiler           Build cuda_11.6.r11.6/compiler.31057947_0
+DETECTRON2_ENV_MODULE   <not set>
+PyTorch                 1.12.0+cu116 @/home/gh/miniconda3/envs/cadet3d/lib/python3.8/site-packages/torch
+PyTorch debug build     False
+GPU available           Yes
+GPU 0                   NVIDIA RTX A4000 (arch=8.6)
+Driver version          528.89
+CUDA_HOME               /usr/local/cuda-11.6
+Pillow                  9.5.0
+torchvision             0.13.0+cu116 @/home/gh/miniconda3/envs/cadet3d/lib/python3.8/site-packages/torchvision
+torchvision arch flags  3.5, 5.0, 6.0, 7.0, 7.5, 8.0, 8.6
+fvcore                  0.1.5.post20221221
+iopath                  0.1.9
+cv2                     4.7.0
+----------------------  --------------------------------------------------------------------------------------
+PyTorch built with:
+  - GCC 9.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.6.0 (Git Hash 52b5f107dd9cf10910aaa19cb47f3abf9b349815)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.6
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.3.2  (built against CUDA 11.5)
+  - Magma 2.6.1
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.6, CUDNN_VERSION=8.3.2, CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Werror=cast-function-type -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.12.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=OFF, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+[05/05 20:14:57] cvmatrix INFO: Command line arguments: Namespace(config_file='configs/cross_view_transformer/en-b4_vehicle_polar_224x480.py', dist_url='tcp://127.0.0.1:50152', eval_only=False, machine_rank=0, num_gpus=1, num_machines=1, opts=None, resume=False)
+[05/05 20:14:57] cvmatrix INFO: Contents of args.config_file=configs/cross_view_transformer/en-b4_vehicle_polar_224x480.py:
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15msolver[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15msolver[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mdataset[39m[38;5;15m.[39m[38;5;15mnuscenes[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mdatasets[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mdataloader[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mdataloader[39m
+[38;5;197mfrom[39m[38;5;15m [39m[38;5;15m.[39m[38;5;15m.[39m[38;5;15mcommon[39m[38;5;15m.[39m[38;5;15mtrain[39m[38;5;15m [39m[38;5;197mimport[39m[38;5;15m [39m[38;5;15mtrain[39m[38;5;15m,[39m[38;5;15m [39m[38;5;15mtest[39m
+
+[38;5;15mimage_height_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m224[39m
+[38;5;15mimage_width_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m480[39m
+[38;5;15mtop_crop_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m46[39m
+[38;5;15mdim_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m128[39m
+[38;5;15mbev_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m    [39m[38;5;15mbev_height[39m[38;5;197m=[39m[38;5;141m200[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mbev_width[39m[38;5;197m=[39m[38;5;141m200[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mh_meters[39m[38;5;197m=[39m[38;5;141m100.0[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mw_meters[39m[38;5;197m=[39m[38;5;141m100.0[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15moffset[39m[38;5;197m=[39m[38;5;141m0.0[39m
+[38;5;15m)[39m
+[38;5;15mblocks_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15m[[39m[38;5;141m128[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m128[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m64[39m[38;5;15m][39m
+[38;5;15mlabel_indices_[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15m[[39m[38;5;15m[[39m[38;5;141m4[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m5[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m6[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m7[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m8[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m10[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m11[39m[38;5;15m][39m[38;5;15m][39m
+
+
+[38;5;15mmodel[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m    [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mCrossViewTransformerExp[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mmodel_type[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m'[39m[38;5;186mbev[39m[38;5;186m'[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mdim_last[39m[38;5;197m=[39m[38;5;141m128[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15moutputs[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mbev[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;141m0[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m1[39m[38;5;15m][39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mcenter[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;141m1[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m2[39m[38;5;15m][39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15minput_size[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;15mimage_height_[39m[38;5;15m,[39m[38;5;15m [39m[38;5;15mimage_width_[39m[38;5;15m][39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mbackbone[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mEfficientNetExtractor[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mmodel_name[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mefficientnet-b4[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15moutput_layers[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;186m'[39m[38;5;186mreduction_3[39m[38;5;186m'[39m[38;5;15m,[39m[38;5;15m [39m[38;5;186m'[39m[38;5;186mreduction_4[39m[38;5;186m'[39m[38;5;15m][39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mtransformer[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mCVTPolar[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mdim[39m[38;5;197m=[39m[38;5;15mdim_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mscale[39m[38;5;197m=[39m[38;5;141m1.0[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mmiddle[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;141m2[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m2[39m[38;5;15m][39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mcross_view[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m            [39m[38;5;15mheads[39m[38;5;197m=[39m[38;5;141m4[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mdim_head[39m[38;5;197m=[39m[38;5;141m64[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mqkv_bias[39m[38;5;197m=[39m[38;5;81mTrue[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mskip[39m[38;5;197m=[39m[38;5;81mTrue[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mno_image_features[39m[38;5;197m=[39m[38;5;81mFalse[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mimage_height[39m[38;5;197m=[39m[38;5;15mimage_height_[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mimage_width[39m[38;5;197m=[39m[38;5;15mimage_width_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mbev_embedding[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m            [39m[38;5;15msigma[39m[38;5;197m=[39m[38;5;141m1.0[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;197m*[39m[38;5;197m*[39m[38;5;15mbev_[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mblocks[39m[38;5;197m=[39m[38;5;15mblocks_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mfeats_shapes[39m[38;5;197m=[39m[38;5;81mNone[39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mhead[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mCrossViewTransformerHead[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mdim[39m[38;5;197m=[39m[38;5;15mdim_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mblocks[39m[38;5;197m=[39m[38;5;15mblocks_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mresidual[39m[38;5;197m=[39m[38;5;81mTrue[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mfactor[39m[38;5;197m=[39m[38;5;141m2[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mlosses[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mbev_loss[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m            [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mBinarySegmentationLoss[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mlabel_indices[39m[38;5;197m=[39m[38;5;15mlabel_indices_[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mgamma[39m[38;5;197m=[39m[38;5;141m2.0[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15malpha[39m[38;5;197m=[39m[38;5;197m-[39m[38;5;141m1.0[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mmin_visibility[39m[38;5;197m=[39m[38;5;141m2[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mweight[39m[38;5;197m=[39m[38;5;141m1.0[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mcenter_loss[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m            [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mCenterLoss[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mweight[39m[38;5;197m=[39m[38;5;141m0.1[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mgamma[39m[38;5;197m=[39m[38;5;141m2.0[39m[38;5;15m,[39m
+[38;5;15m            [39m[38;5;15mmin_visibility[39m[38;5;197m=[39m[38;5;141m2[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15m)[39m
+[38;5;15m    [39m[38;5;15m)[39m
+[38;5;15m)[39m
+
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15muuid[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m"[39m
+[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15moutput_dir[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;186m"[39m[38;5;186m./outputs[39m[38;5;186m"[39m
+
+[38;5;242m# solver config[39m
+[38;5;15msolver[39m[38;5;197m.[39m[38;5;15mmax_iter[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;141m70325[39m
+[38;5;15msolver[39m[38;5;197m.[39m[38;5;15moptimizer[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m    [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mAdamW[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mlr[39m[38;5;197m=[39m[38;5;141m4e-3[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mweight_decay[39m[38;5;197m=[39m[38;5;141m1e-7[39m[38;5;15m,[39m
+[38;5;15m)[39m
+[38;5;15msolver[39m[38;5;197m.[39m[38;5;15mlr_scheduler[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m    [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mOneCycleLR[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mdiv_factor[39m[38;5;197m=[39m[38;5;141m10[39m[38;5;15m,[39m[38;5;15m                                  [39m[38;5;242m# starts at lr / 10[39m
+[38;5;15m    [39m[38;5;15mpct_start[39m[38;5;197m=[39m[38;5;141m0.3[39m[38;5;15m,[39m[38;5;15m                                  [39m[38;5;242m# reaches lr at 30% of total steps[39m
+[38;5;15m    [39m[38;5;15mfinal_div_factor[39m[38;5;197m=[39m[38;5;141m10[39m[38;5;15m,[39m[38;5;15m                            [39m[38;5;242m# ends at lr / 10 / 10[39m
+[38;5;15m    [39m[38;5;15mmax_lr[39m[38;5;197m=[39m[38;5;15msolver[39m[38;5;197m.[39m[38;5;15moptimizer[39m[38;5;197m.[39m[38;5;15mlr[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mtotal_steps[39m[38;5;197m=[39m[38;5;15msolver[39m[38;5;197m.[39m[38;5;15mmax_iter[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mcycle_momentum[39m[38;5;197m=[39m[38;5;81mFalse[39m[38;5;15m,[39m
+[38;5;15m)[39m
+
+[38;5;15mdatasets[39m[38;5;197m.[39m[38;5;15mtrain[39m[38;5;197m.[39m[38;5;15mupdate[39m[38;5;15m([39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m    [39m[38;5;15mdata_dir[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186m/home/gh/workspace/data/nuscenes/trainval/[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mnormalize[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mnorm_resnet[39m[38;5;197m=[39m[38;5;81mFalse[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mmean[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;141m0.485[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m0.456[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m0.406[39m[38;5;15m][39m[38;5;15m,[39m[38;5;15m     [39m
+[38;5;15m        [39m[38;5;15mstd[39m[38;5;197m=[39m[38;5;15m[[39m[38;5;141m0.229[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m0.224[39m[38;5;15m,[39m[38;5;15m [39m[38;5;141m0.225[39m[38;5;15m][39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mto_rgb[39m[38;5;197m=[39m[38;5;81mFalse[39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mlabels_root[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186m/home/gh/workspace/data/nuscenes/cvt_labels[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mlabels_dir_name[39m[38;5;197m=[39m[38;5;186m"[39m[38;5;186mcvt_labels_nuscenes_v2[39m[38;5;186m"[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15mimage[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mh[39m[38;5;197m=[39m[38;5;15mimage_height_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mw[39m[38;5;197m=[39m[38;5;15mimage_width_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mtop_crop[39m[38;5;197m=[39m[38;5;15mtop_crop_[39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15maugment[39m[38;5;197m=[39m[38;5;186m'[39m[38;5;186mnone[39m[38;5;186m'[39m
+[38;5;15m)[39m[38;5;15m)[39m
+
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mbatch_size[39m[38;5;197m=[39m[38;5;141m8[39m
+[38;5;15mdataloader[39m[38;5;197m.[39m[38;5;15mnum_workers[39m[38;5;197m=[39m[38;5;141m6[39m
+
+[38;5;15mevaluator[39m[38;5;15m [39m[38;5;197m=[39m[38;5;15m [39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m    [39m[38;5;15miou[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m'[39m[38;5;186mIoUMetric[39m[38;5;186m'[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mlabel_indices[39m[38;5;197m=[39m[38;5;15mlabel_indices_[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mmin_visibility[39m[38;5;197m=[39m[38;5;141m2[39m
+[38;5;15m    [39m[38;5;15m)[39m[38;5;15m,[39m
+[38;5;15m    [39m[38;5;15miou_with_occlusions[39m[38;5;197m=[39m[38;5;15mdict[39m[38;5;15m([39m
+[38;5;15m        [39m[38;5;15mtype[39m[38;5;197m=[39m[38;5;186m'[39m[38;5;186mIoUMetric[39m[38;5;186m'[39m[38;5;15m,[39m
+[38;5;15m        [39m[38;5;15mlabel_indices[39m[38;5;197m=[39m[38;5;15mlabel_indices_[39m
+[38;5;15m    [39m[38;5;15m)[39m
+[38;5;15m)[39m
+
+[05/05 20:14:57] cvmatrix INFO: Full config saved to ./outputs/en-b4_vehicle_polar_224x480/20230505-201457/config.yaml
+[05/05 20:14:57] d2.utils.env INFO: Using a generated random seed 57991154
+[05/05 20:14:59] d2.engine.defaults INFO: Model:
+CrossViewTransformerExp(
+  (backbone): EfficientNetExtractor(
+    (layers): Sequential(
+      (0): Sequential(
+        (0): Conv2dStaticSamePadding(
+          3, 48, kernel_size=(3, 3), stride=(2, 2), bias=False
+          (static_padding): ZeroPad2d((0, 1, 0, 1))
+        )
+        (1): BatchNorm2d(48, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+        (2): SiLU()
+      )
+      (1): SequentialWithArgs(
+        (0): MBConvBlock(
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            48, 48, kernel_size=(3, 3), stride=[1, 1], groups=48, bias=False
+            (static_padding): ZeroPad2d((1, 1, 1, 1))
+          )
+          (_bn1): BatchNorm2d(48, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            48, 12, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            12, 48, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            48, 24, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(24, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (1): MBConvBlock(
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            24, 24, kernel_size=(3, 3), stride=(1, 1), groups=24, bias=False
+            (static_padding): ZeroPad2d((1, 1, 1, 1))
+          )
+          (_bn1): BatchNorm2d(24, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            24, 6, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            6, 24, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            24, 24, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(24, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (2): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            24, 144, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(144, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            144, 144, kernel_size=(3, 3), stride=[2, 2], groups=144, bias=False
+            (static_padding): ZeroPad2d((0, 1, 0, 1))
+          )
+          (_bn1): BatchNorm2d(144, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            144, 6, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            6, 144, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            144, 32, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(32, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+      )
+      (2): SequentialWithArgs(
+        (0): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            32, 192, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            192, 192, kernel_size=(3, 3), stride=(1, 1), groups=192, bias=False
+            (static_padding): ZeroPad2d((1, 1, 1, 1))
+          )
+          (_bn1): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            192, 8, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            8, 192, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            192, 32, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(32, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (1): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            32, 192, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            192, 192, kernel_size=(3, 3), stride=(1, 1), groups=192, bias=False
+            (static_padding): ZeroPad2d((1, 1, 1, 1))
+          )
+          (_bn1): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            192, 8, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            8, 192, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            192, 32, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(32, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (2): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            32, 192, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            192, 192, kernel_size=(3, 3), stride=(1, 1), groups=192, bias=False
+            (static_padding): ZeroPad2d((1, 1, 1, 1))
+          )
+          (_bn1): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            192, 8, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            8, 192, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            192, 32, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(32, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (3): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            32, 192, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            192, 192, kernel_size=(5, 5), stride=[2, 2], groups=192, bias=False
+            (static_padding): ZeroPad2d((2, 2, 2, 2))
+          )
+          (_bn1): BatchNorm2d(192, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            192, 8, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            8, 192, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            192, 56, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(56, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+      )
+      (3): SequentialWithArgs(
+        (0): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            56, 336, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            336, 336, kernel_size=(5, 5), stride=(1, 1), groups=336, bias=False
+            (static_padding): ZeroPad2d((2, 2, 2, 2))
+          )
+          (_bn1): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            336, 14, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            14, 336, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            336, 56, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(56, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (1): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            56, 336, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            336, 336, kernel_size=(5, 5), stride=(1, 1), groups=336, bias=False
+            (static_padding): ZeroPad2d((2, 2, 2, 2))
+          )
+          (_bn1): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            336, 14, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            14, 336, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            336, 56, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(56, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (2): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            56, 336, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            336, 336, kernel_size=(5, 5), stride=(1, 1), groups=336, bias=False
+            (static_padding): ZeroPad2d((2, 2, 2, 2))
+          )
+          (_bn1): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            336, 14, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            14, 336, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            336, 56, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(56, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+        (3): MBConvBlock(
+          (_expand_conv): Conv2dStaticSamePadding(
+            56, 336, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn0): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_depthwise_conv): Conv2dStaticSamePadding(
+            336, 336, kernel_size=(3, 3), stride=[2, 2], groups=336, bias=False
+            (static_padding): ZeroPad2d((0, 1, 0, 1))
+          )
+          (_bn1): BatchNorm2d(336, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_se_reduce): Conv2dStaticSamePadding(
+            336, 14, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_se_expand): Conv2dStaticSamePadding(
+            14, 336, kernel_size=(1, 1), stride=(1, 1)
+            (static_padding): Identity()
+          )
+          (_project_conv): Conv2dStaticSamePadding(
+            336, 112, kernel_size=(1, 1), stride=(1, 1), bias=False
+            (static_padding): Identity()
+          )
+          (_bn2): BatchNorm2d(112, eps=0.001, momentum=0.010000000000000009, affine=True, track_running_stats=True)
+          (_swish): SiLU()
+        )
+      )
+    )
+  )
+  (transformer): CVTPolar(
+    (bev_embedding): BEVEmbedding()
+    (cross_views): ModuleList(
+      (0): CrossViewAttention(
+        (feature_linear): Sequential(
+          (0): BatchNorm2d(56, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): Conv2d(56, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        )
+        (feature_proj): Sequential(
+          (0): BatchNorm2d(56, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): Conv2d(56, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        )
+        (bev_embed): Conv2d(2, 128, kernel_size=(1, 1), stride=(1, 1))
+        (img_embed): Conv2d(3, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (cam_embed): Conv2d(2, 128, kernel_size=(1, 1), stride=(1, 1))
+        (cross_attend): CrossAttention(
+          (to_q): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_k): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_v): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (proj): Linear(in_features=256, out_features=128, bias=True)
+          (prenorm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (0): Linear(in_features=128, out_features=256, bias=True)
+            (1): GELU(approximate=none)
+            (2): Linear(in_features=256, out_features=128, bias=True)
+          )
+          (postnorm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+        )
+        (polar_attend): PolarAttention(
+          (to_q): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_k): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_v): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (proj): Linear(in_features=256, out_features=128, bias=True)
+          (prenorm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (0): Linear(in_features=128, out_features=256, bias=True)
+            (1): GELU(approximate=none)
+            (2): Linear(in_features=256, out_features=128, bias=True)
+          )
+        )
+      )
+      (1): CrossViewAttention(
+        (feature_linear): Sequential(
+          (0): BatchNorm2d(112, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): Conv2d(112, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        )
+        (feature_proj): Sequential(
+          (0): BatchNorm2d(112, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): Conv2d(112, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        )
+        (bev_embed): Conv2d(2, 128, kernel_size=(1, 1), stride=(1, 1))
+        (img_embed): Conv2d(3, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (cam_embed): Conv2d(2, 128, kernel_size=(1, 1), stride=(1, 1))
+        (cross_attend): CrossAttention(
+          (to_q): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_k): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_v): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (proj): Linear(in_features=256, out_features=128, bias=True)
+          (prenorm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (0): Linear(in_features=128, out_features=256, bias=True)
+            (1): GELU(approximate=none)
+            (2): Linear(in_features=256, out_features=128, bias=True)
+          )
+          (postnorm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+        )
+        (polar_attend): PolarAttention(
+          (to_q): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_k): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (to_v): Sequential(
+            (0): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+            (1): Linear(in_features=128, out_features=256, bias=True)
+          )
+          (proj): Linear(in_features=256, out_features=128, bias=True)
+          (prenorm): LayerNorm((128,), eps=1e-05, elementwise_affine=True)
+          (mlp): Sequential(
+            (0): Linear(in_features=128, out_features=256, bias=True)
+            (1): GELU(approximate=none)
+            (2): Linear(in_features=256, out_features=128, bias=True)
+          )
+        )
+      )
+    )
+    (layers): ModuleList(
+      (0): Sequential(
+        (0): Bottleneck(
+          (conv1): Conv2d(128, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+        (1): Bottleneck(
+          (conv1): Conv2d(128, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+      )
+      (1): Sequential(
+        (0): Bottleneck(
+          (conv1): Conv2d(128, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+        (1): Bottleneck(
+          (conv1): Conv2d(128, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn1): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (bn2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (conv3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (bn3): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (relu): ReLU(inplace=True)
+        )
+      )
+    )
+  )
+  (head): CrossViewTransformerHead(
+    (layers): Sequential(
+      (0): DecoderBlock(
+        (conv): Sequential(
+          (0): Upsample(scale_factor=2.0, mode=bilinear)
+          (1): Conv2d(128, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (3): ReLU(inplace=True)
+          (4): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (5): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (up): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+        (relu): ReLU(inplace=True)
+      )
+      (1): DecoderBlock(
+        (conv): Sequential(
+          (0): Upsample(scale_factor=2.0, mode=bilinear)
+          (1): Conv2d(128, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (3): ReLU(inplace=True)
+          (4): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (5): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (up): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+        (relu): ReLU(inplace=True)
+      )
+      (2): DecoderBlock(
+        (conv): Sequential(
+          (0): Upsample(scale_factor=2.0, mode=bilinear)
+          (1): Conv2d(128, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+          (2): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (3): ReLU(inplace=True)
+          (4): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1), bias=False)
+          (5): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        )
+        (up): Conv2d(128, 64, kernel_size=(1, 1), stride=(1, 1))
+        (relu): ReLU(inplace=True)
+      )
+    )
+  )
+  (to_logits): Sequential(
+    (0): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (1): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (2): ReLU(inplace=True)
+    (3): Conv2d(128, 2, kernel_size=(1, 1), stride=(1, 1))
+  )
+)
+[05/05 20:15:05] fvcore.common.checkpoint INFO: No checkpoint found. Initializing model from scratch
+[05/05 20:15:05] d2.engine.train_loop INFO: Starting training from iteration 0
+[05/05 20:15:25] d2.utils.events INFO:  eta: 14:16:15  iter: 000019  total_loss: 0.05588  bev_loss: 0.0498  center_loss: 0.006078  time: 0.7308  data_time: 0.0609  lr: 0.00040001  max_mem: 6776M
+[05/05 20:15:39] d2.utils.events INFO:  eta: 14:16:35  iter: 000039  total_loss: 0.02872  bev_loss: 0.02611  center_loss: 0.002935  time: 0.7313  data_time: 0.0001  lr: 0.00040003  max_mem: 6776M
+[05/05 20:15:54] d2.utils.events INFO:  eta: 14:18:03  iter: 000059  total_loss: 0.02627  bev_loss: 0.02435  center_loss: 0.001652  time: 0.7340  data_time: 0.0001  lr: 0.00040007  max_mem: 6776M
+[05/05 20:16:09] d2.utils.events INFO:  eta: 14:19:36  iter: 000079  total_loss: 0.02495  bev_loss: 0.02385  center_loss: 0.001178  time: 0.7373  data_time: 0.0001  lr: 0.00040012  max_mem: 6776M
+[05/05 20:16:24] d2.utils.events INFO:  eta: 14:23:08  iter: 000099  total_loss: 0.02388  bev_loss: 0.02311  center_loss: 0.0008133  time: 0.7398  data_time: 0.0001  lr: 0.0004002  max_mem: 6776M
+[05/05 20:16:39] d2.utils.events INFO:  eta: 14:26:20  iter: 000119  total_loss: 0.02307  bev_loss: 0.02246  center_loss: 0.0006124  time: 0.7418  data_time: 0.0001  lr: 0.00040028  max_mem: 6776M
+[05/05 20:16:54] d2.utils.events INFO:  eta: 14:30:09  iter: 000139  total_loss: 0.02371  bev_loss: 0.02319  center_loss: 0.0005046  time: 0.7438  data_time: 0.0001  lr: 0.00040039  max_mem: 6776M
+[05/05 20:17:09] d2.utils.events INFO:  eta: 14:31:08  iter: 000159  total_loss: 0.02238  bev_loss: 0.02193  center_loss: 0.0004184  time: 0.7444  data_time: 0.0001  lr: 0.0004005  max_mem: 6776M
+[05/05 20:17:24] d2.utils.events INFO:  eta: 14:32:50  iter: 000179  total_loss: 0.02294  bev_loss: 0.02257  center_loss: 0.0003689  time: 0.7449  data_time: 0.0001  lr: 0.00040064  max_mem: 6776M
+[05/05 20:17:39] d2.utils.events INFO:  eta: 14:33:09  iter: 000199  total_loss: 0.02013  bev_loss: 0.01983  center_loss: 0.0003086  time: 0.7453  data_time: 0.0001  lr: 0.00040079  max_mem: 6776M
+[05/05 20:17:54] d2.utils.events INFO:  eta: 14:33:12  iter: 000219  total_loss: 0.02259  bev_loss: 0.0223  center_loss: 0.0002826  time: 0.7456  data_time: 0.0001  lr: 0.00040096  max_mem: 6776M
+[05/05 20:18:09] d2.utils.events INFO:  eta: 14:33:11  iter: 000239  total_loss: 0.02253  bev_loss: 0.02228  center_loss: 0.0002549  time: 0.7460  data_time: 0.0001  lr: 0.00040114  max_mem: 6776M
+[05/05 20:18:24] d2.utils.events INFO:  eta: 14:33:15  iter: 000259  total_loss: 0.02091  bev_loss: 0.0207  center_loss: 0.0002241  time: 0.7463  data_time: 0.0001  lr: 0.00040134  max_mem: 6776M
+[05/05 20:18:39] d2.utils.events INFO:  eta: 14:33:23  iter: 000279  total_loss: 0.02031  bev_loss: 0.02011  center_loss: 0.0002074  time: 0.7467  data_time: 0.0001  lr: 0.00040155  max_mem: 6776M
+[05/05 20:18:54] d2.utils.events INFO:  eta: 14:33:47  iter: 000299  total_loss: 0.0237  bev_loss: 0.02351  center_loss: 0.0001906  time: 0.7470  data_time: 0.0001  lr: 0.00040178  max_mem: 6776M
+[05/05 20:19:09] d2.utils.events INFO:  eta: 14:33:49  iter: 000319  total_loss: 0.02299  bev_loss: 0.02281  center_loss: 0.0001782  time: 0.7473  data_time: 0.0001  lr: 0.00040203  max_mem: 6776M
+[05/05 20:19:24] d2.utils.events INFO:  eta: 14:33:50  iter: 000339  total_loss: 0.02112  bev_loss: 0.02097  center_loss: 0.0001619  time: 0.7475  data_time: 0.0001  lr: 0.00040229  max_mem: 6776M
+[05/05 20:19:39] d2.utils.events INFO:  eta: 14:33:53  iter: 000359  total_loss: 0.02107  bev_loss: 0.02092  center_loss: 0.0001548  time: 0.7478  data_time: 0.0001  lr: 0.00040257  max_mem: 6776M
+[05/05 20:19:54] d2.utils.events INFO:  eta: 14:33:45  iter: 000379  total_loss: 0.01892  bev_loss: 0.01878  center_loss: 0.000145  time: 0.7481  data_time: 0.0001  lr: 0.00040287  max_mem: 6776M
+[05/05 20:20:10] d2.utils.events INFO:  eta: 14:33:52  iter: 000399  total_loss: 0.02054  bev_loss: 0.0204  center_loss: 0.000136  time: 0.7487  data_time: 0.0001  lr: 0.00040318  max_mem: 6776M
+[05/05 20:20:25] d2.utils.events INFO:  eta: 14:33:49  iter: 000419  total_loss: 0.01868  bev_loss: 0.01855  center_loss: 0.0001301  time: 0.7492  data_time: 0.0001  lr: 0.0004035  max_mem: 6776M
+[05/05 20:20:40] d2.utils.events INFO:  eta: 14:33:54  iter: 000439  total_loss: 0.01937  bev_loss: 0.01924  center_loss: 0.000127  time: 0.7496  data_time: 0.0001  lr: 0.00040384  max_mem: 6776M
+[05/05 20:20:55] d2.utils.events INFO:  eta: 14:33:54  iter: 000459  total_loss: 0.01855  bev_loss: 0.01844  center_loss: 0.0001214  time: 0.7499  data_time: 0.0001  lr: 0.0004042  max_mem: 6776M
+[05/05 20:21:10] d2.utils.events INFO:  eta: 14:33:48  iter: 000479  total_loss: 0.01641  bev_loss: 0.0163  center_loss: 0.000109  time: 0.7501  data_time: 0.0001  lr: 0.00040458  max_mem: 6776M
+[05/05 20:21:25] d2.utils.events INFO:  eta: 14:33:45  iter: 000499  total_loss: 0.01992  bev_loss: 0.0198  center_loss: 0.0001252  time: 0.7503  data_time: 0.0001  lr: 0.00040497  max_mem: 6776M
+[05/05 20:21:40] d2.utils.events INFO:  eta: 14:33:41  iter: 000519  total_loss: 0.01809  bev_loss: 0.01798  center_loss: 0.0001112  time: 0.7505  data_time: 0.0001  lr: 0.00040537  max_mem: 6776M
+[05/05 20:21:56] d2.utils.events INFO:  eta: 14:33:38  iter: 000539  total_loss: 0.02017  bev_loss: 0.02005  center_loss: 0.0001177  time: 0.7507  data_time: 0.0001  lr: 0.0004058  max_mem: 6776M
+[05/05 20:22:11] d2.utils.events INFO:  eta: 14:33:36  iter: 000559  total_loss: 0.0193  bev_loss: 0.0192  center_loss: 0.0001111  time: 0.7511  data_time: 0.0001  lr: 0.00040623  max_mem: 6776M
+[05/05 20:22:26] d2.utils.events INFO:  eta: 14:33:38  iter: 000579  total_loss: 0.01986  bev_loss: 0.01974  center_loss: 0.0001146  time: 0.7513  data_time: 0.0001  lr: 0.00040669  max_mem: 6776M
+[05/05 20:22:41] d2.utils.events INFO:  eta: 14:33:28  iter: 000599  total_loss: 0.01911  bev_loss: 0.019  center_loss: 0.0001015  time: 0.7518  data_time: 0.0001  lr: 0.00040716  max_mem: 6776M
+[05/05 20:22:56] d2.utils.events INFO:  eta: 14:33:28  iter: 000619  total_loss: 0.02064  bev_loss: 0.02054  center_loss: 0.0001112  time: 0.7521  data_time: 0.0001  lr: 0.00040764  max_mem: 6776M
+[05/05 20:23:12] d2.utils.events INFO:  eta: 14:33:30  iter: 000639  total_loss: 0.01774  bev_loss: 0.01765  center_loss: 9.583e-05  time: 0.7522  data_time: 0.0001  lr: 0.00040814  max_mem: 6776M
+[05/05 20:23:27] d2.utils.events INFO:  eta: 14:33:29  iter: 000659  total_loss: 0.01829  bev_loss: 0.01818  center_loss: 0.0001008  time: 0.7522  data_time: 0.0001  lr: 0.00040866  max_mem: 6776M
+[05/05 20:23:42] d2.utils.events INFO:  eta: 14:33:21  iter: 000679  total_loss: 0.019  bev_loss: 0.0189  center_loss: 9.37e-05  time: 0.7523  data_time: 0.0001  lr: 0.00040919  max_mem: 6776M
+[05/05 20:23:57] d2.utils.events INFO:  eta: 14:33:09  iter: 000699  total_loss: 0.01849  bev_loss: 0.01839  center_loss: 9.686e-05  time: 0.7523  data_time: 0.0001  lr: 0.00040974  max_mem: 6776M
+[05/05 20:24:12] d2.utils.events INFO:  eta: 14:33:05  iter: 000719  total_loss: 0.01848  bev_loss: 0.01839  center_loss: 9.058e-05  time: 0.7524  data_time: 0.0001  lr: 0.00041031  max_mem: 6776M
+[05/05 20:24:27] d2.utils.events INFO:  eta: 14:32:53  iter: 000739  total_loss: 0.01909  bev_loss: 0.019  center_loss: 9.631e-05  time: 0.7524  data_time: 0.0001  lr: 0.00041089  max_mem: 6776M
+[05/05 20:24:42] d2.utils.events INFO:  eta: 14:32:35  iter: 000759  total_loss: 0.01819  bev_loss: 0.01809  center_loss: 9.348e-05  time: 0.7524  data_time: 0.0001  lr: 0.00041149  max_mem: 6776M
+[05/05 20:24:57] d2.utils.events INFO:  eta: 14:32:19  iter: 000779  total_loss: 0.01783  bev_loss: 0.01774  center_loss: 9.035e-05  time: 0.7524  data_time: 0.0001  lr: 0.0004121  max_mem: 6776M
+[05/05 20:25:12] d2.utils.events INFO:  eta: 14:32:10  iter: 000799  total_loss: 0.01966  bev_loss: 0.01957  center_loss: 9.483e-05  time: 0.7524  data_time: 0.0001  lr: 0.00041273  max_mem: 6776M
+[05/05 20:25:27] d2.utils.events INFO:  eta: 14:32:03  iter: 000819  total_loss: 0.01781  bev_loss: 0.01772  center_loss: 9.307e-05  time: 0.7524  data_time: 0.0001  lr: 0.00041337  max_mem: 6776M
+[05/05 20:25:42] d2.utils.events INFO:  eta: 14:31:43  iter: 000839  total_loss: 0.01946  bev_loss: 0.01936  center_loss: 9.636e-05  time: 0.7525  data_time: 0.0001  lr: 0.00041403  max_mem: 6776M
+[05/05 20:25:57] d2.utils.events INFO:  eta: 14:31:36  iter: 000859  total_loss: 0.01781  bev_loss: 0.01773  center_loss: 8.69e-05  time: 0.7525  data_time: 0.0001  lr: 0.00041471  max_mem: 6776M
+[05/05 20:26:13] d2.utils.events INFO:  eta: 14:31:29  iter: 000879  total_loss: 0.02037  bev_loss: 0.02028  center_loss: 9.382e-05  time: 0.7527  data_time: 0.0001  lr: 0.0004154  max_mem: 6776M
+[05/05 20:26:28] d2.utils.events INFO:  eta: 14:31:22  iter: 000899  total_loss: 0.01848  bev_loss: 0.01839  center_loss: 9.413e-05  time: 0.7528  data_time: 0.0001  lr: 0.00041611  max_mem: 6776M
+[05/05 20:26:43] d2.utils.events INFO:  eta: 14:31:12  iter: 000919  total_loss: 0.0189  bev_loss: 0.0188  center_loss: 9.673e-05  time: 0.7530  data_time: 0.0001  lr: 0.00041683  max_mem: 6776M
+[05/05 20:26:58] d2.utils.events INFO:  eta: 14:31:01  iter: 000939  total_loss: 0.0176  bev_loss: 0.01752  center_loss: 8.247e-05  time: 0.7531  data_time: 0.0001  lr: 0.00041757  max_mem: 6776M
+[05/05 20:27:13] d2.utils.events INFO:  eta: 14:30:52  iter: 000959  total_loss: 0.01833  bev_loss: 0.01824  center_loss: 9.037e-05  time: 0.7533  data_time: 0.0001  lr: 0.00041832  max_mem: 6776M
+[05/05 20:27:29] d2.utils.events INFO:  eta: 14:30:48  iter: 000979  total_loss: 0.01873  bev_loss: 0.01864  center_loss: 9.428e-05  time: 0.7534  data_time: 0.0001  lr: 0.00041909  max_mem: 6776M
+[05/05 20:27:44] d2.utils.events INFO:  eta: 14:30:41  iter: 000999  total_loss: 0.01742  bev_loss: 0.01734  center_loss: 8.763e-05  time: 0.7534  data_time: 0.0001  lr: 0.00041988  max_mem: 6776M
+[05/05 20:27:59] d2.utils.events INFO:  eta: 14:30:36  iter: 001019  total_loss: 0.01951  bev_loss: 0.01941  center_loss: 9.303e-05  time: 0.7535  data_time: 0.0001  lr: 0.00042068  max_mem: 6776M
+[05/05 20:28:14] d2.utils.events INFO:  eta: 14:30:32  iter: 001039  total_loss: 0.01723  bev_loss: 0.01715  center_loss: 7.894e-05  time: 0.7537  data_time: 0.0001  lr: 0.0004215  max_mem: 6776M
+[05/05 20:28:29] d2.utils.events INFO:  eta: 14:30:28  iter: 001059  total_loss: 0.01829  bev_loss: 0.0182  center_loss: 8.275e-05  time: 0.7538  data_time: 0.0001  lr: 0.00042234  max_mem: 6776M
+[05/05 20:28:45] d2.utils.events INFO:  eta: 14:30:19  iter: 001079  total_loss: 0.0183  bev_loss: 0.01821  center_loss: 8.791e-05  time: 0.7540  data_time: 0.0001  lr: 0.00042319  max_mem: 6776M
+[05/05 20:29:00] d2.utils.events INFO:  eta: 14:30:09  iter: 001099  total_loss: 0.01837  bev_loss: 0.01827  center_loss: 8.569e-05  time: 0.7540  data_time: 0.0001  lr: 0.00042405  max_mem: 6776M
+[05/05 20:29:15] d2.utils.events INFO:  eta: 14:30:01  iter: 001119  total_loss: 0.01836  bev_loss: 0.01826  center_loss: 9.567e-05  time: 0.7541  data_time: 0.0001  lr: 0.00042493  max_mem: 6776M
+[05/05 20:29:30] d2.utils.events INFO:  eta: 14:29:45  iter: 001139  total_loss: 0.01726  bev_loss: 0.01719  center_loss: 8.78e-05  time: 0.7541  data_time: 0.0001  lr: 0.00042583  max_mem: 6776M
+[05/05 20:29:45] d2.utils.events INFO:  eta: 14:29:31  iter: 001159  total_loss: 0.01793  bev_loss: 0.01784  center_loss: 8.755e-05  time: 0.7540  data_time: 0.0001  lr: 0.00042674  max_mem: 6776M
+[05/05 20:30:00] d2.utils.events INFO:  eta: 14:29:17  iter: 001179  total_loss: 0.01662  bev_loss: 0.01653  center_loss: 8.557e-05  time: 0.7540  data_time: 0.0001  lr: 0.00042767  max_mem: 6776M
+[05/05 20:30:15] d2.utils.events INFO:  eta: 14:29:04  iter: 001199  total_loss: 0.01671  bev_loss: 0.01664  center_loss: 7.702e-05  time: 0.7540  data_time: 0.0001  lr: 0.00042862  max_mem: 6776M
+[05/05 20:30:30] d2.utils.events INFO:  eta: 14:28:49  iter: 001219  total_loss: 0.01958  bev_loss: 0.01948  center_loss: 9.725e-05  time: 0.7540  data_time: 0.0001  lr: 0.00042958  max_mem: 6776M
+[05/05 20:30:45] d2.utils.events INFO:  eta: 14:28:35  iter: 001239  total_loss: 0.01667  bev_loss: 0.01659  center_loss: 8.181e-05  time: 0.7540  data_time: 0.0001  lr: 0.00043055  max_mem: 6776M
+[05/05 20:31:00] d2.utils.events INFO:  eta: 14:28:21  iter: 001259  total_loss: 0.01711  bev_loss: 0.01703  center_loss: 8.744e-05  time: 0.7540  data_time: 0.0001  lr: 0.00043154  max_mem: 6776M
+[05/05 20:31:16] d2.utils.events INFO:  eta: 14:28:06  iter: 001279  total_loss: 0.0171  bev_loss: 0.01701  center_loss: 8.494e-05  time: 0.7540  data_time: 0.0001  lr: 0.00043255  max_mem: 6776M
+[05/05 20:31:31] d2.utils.events INFO:  eta: 14:27:54  iter: 001299  total_loss: 0.01647  bev_loss: 0.01638  center_loss: 8.55e-05  time: 0.7539  data_time: 0.0001  lr: 0.00043357  max_mem: 6776M
+[05/05 20:31:46] d2.utils.events INFO:  eta: 14:27:40  iter: 001319  total_loss: 0.02019  bev_loss: 0.0201  center_loss: 9.514e-05  time: 0.7539  data_time: 0.0001  lr: 0.00043461  max_mem: 6776M
+[05/05 20:32:01] d2.utils.events INFO:  eta: 14:27:28  iter: 001339  total_loss: 0.01808  bev_loss: 0.01798  center_loss: 9.289e-05  time: 0.7540  data_time: 0.0001  lr: 0.00043567  max_mem: 6776M
+[05/05 20:32:16] d2.utils.events INFO:  eta: 14:27:23  iter: 001359  total_loss: 0.01536  bev_loss: 0.01528  center_loss: 7.884e-05  time: 0.7541  data_time: 0.0001  lr: 0.00043673  max_mem: 6776M
+[05/05 20:32:31] d2.utils.events INFO:  eta: 14:27:13  iter: 001379  total_loss: 0.01733  bev_loss: 0.01724  center_loss: 8.01e-05  time: 0.7542  data_time: 0.0001  lr: 0.00043782  max_mem: 6776M
+[05/05 20:32:46] d2.utils.events INFO:  eta: 14:26:56  iter: 001399  total_loss: 0.01784  bev_loss: 0.01774  center_loss: 8.993e-05  time: 0.7542  data_time: 0.0001  lr: 0.00043892  max_mem: 6776M
+[05/05 20:33:02] d2.utils.events INFO:  eta: 14:26:40  iter: 001419  total_loss: 0.01596  bev_loss: 0.01588  center_loss: 8.281e-05  time: 0.7543  data_time: 0.0001  lr: 0.00044004  max_mem: 6776M
+[05/05 20:33:17] d2.utils.events INFO:  eta: 14:26:25  iter: 001439  total_loss: 0.0146  bev_loss: 0.01453  center_loss: 7.367e-05  time: 0.7543  data_time: 0.0001  lr: 0.00044117  max_mem: 6776M
+[05/05 20:33:32] d2.utils.events INFO:  eta: 14:26:07  iter: 001459  total_loss: 0.01609  bev_loss: 0.016  center_loss: 8.39e-05  time: 0.7543  data_time: 0.0001  lr: 0.00044232  max_mem: 6776M
+[05/05 20:33:47] d2.utils.events INFO:  eta: 14:25:55  iter: 001479  total_loss: 0.01659  bev_loss: 0.01651  center_loss: 8.154e-05  time: 0.7543  data_time: 0.0001  lr: 0.00044348  max_mem: 6776M
+[05/05 20:34:02] d2.utils.events INFO:  eta: 14:25:43  iter: 001499  total_loss: 0.0184  bev_loss: 0.01831  center_loss: 8.187e-05  time: 0.7544  data_time: 0.0001  lr: 0.00044466  max_mem: 6776M
+[05/05 20:34:17] d2.utils.events INFO:  eta: 14:25:32  iter: 001519  total_loss: 0.01901  bev_loss: 0.01892  center_loss: 8.712e-05  time: 0.7546  data_time: 0.0001  lr: 0.00044585  max_mem: 6776M
+[05/05 20:34:33] d2.utils.events INFO:  eta: 14:25:17  iter: 001539  total_loss: 0.01729  bev_loss: 0.0172  center_loss: 8.089e-05  time: 0.7546  data_time: 0.0001  lr: 0.00044706  max_mem: 6776M
+[05/05 20:34:48] d2.utils.events INFO:  eta: 14:25:03  iter: 001559  total_loss: 0.01745  bev_loss: 0.01737  center_loss: 8.937e-05  time: 0.7548  data_time: 0.0001  lr: 0.00044829  max_mem: 6776M
+[05/05 20:35:03] d2.utils.events INFO:  eta: 14:24:47  iter: 001579  total_loss: 0.01567  bev_loss: 0.01559  center_loss: 7.611e-05  time: 0.7548  data_time: 0.0001  lr: 0.00044953  max_mem: 6776M
+[05/05 20:35:18] d2.utils.events INFO:  eta: 14:24:31  iter: 001599  total_loss: 0.01566  bev_loss: 0.01558  center_loss: 7.541e-05  time: 0.7548  data_time: 0.0001  lr: 0.00045079  max_mem: 6776M
+[05/05 20:35:33] d2.utils.events INFO:  eta: 14:24:10  iter: 001619  total_loss: 0.01703  bev_loss: 0.01696  center_loss: 7.755e-05  time: 0.7548  data_time: 0.0001  lr: 0.00045206  max_mem: 6776M
+[05/05 20:35:48] d2.utils.events INFO:  eta: 14:23:47  iter: 001639  total_loss: 0.016  bev_loss: 0.01592  center_loss: 7.84e-05  time: 0.7548  data_time: 0.0001  lr: 0.00045335  max_mem: 6776M
+[05/05 20:36:03] d2.utils.events INFO:  eta: 14:23:34  iter: 001659  total_loss: 0.01641  bev_loss: 0.01633  center_loss: 8.005e-05  time: 0.7547  data_time: 0.0001  lr: 0.00045465  max_mem: 6776M
+[05/05 20:36:18] d2.utils.events INFO:  eta: 14:23:19  iter: 001679  total_loss: 0.01877  bev_loss: 0.01869  center_loss: 8.808e-05  time: 0.7547  data_time: 0.0001  lr: 0.00045597  max_mem: 6776M
+[05/05 20:36:34] d2.utils.events INFO:  eta: 14:23:01  iter: 001699  total_loss: 0.01523  bev_loss: 0.01516  center_loss: 7.702e-05  time: 0.7547  data_time: 0.0001  lr: 0.0004573  max_mem: 6776M
+[05/05 20:36:49] d2.utils.events INFO:  eta: 14:22:45  iter: 001719  total_loss: 0.01653  bev_loss: 0.01645  center_loss: 7.776e-05  time: 0.7547  data_time: 0.0001  lr: 0.00045865  max_mem: 6776M
+[05/05 20:37:04] d2.utils.events INFO:  eta: 14:22:30  iter: 001739  total_loss: 0.01705  bev_loss: 0.01697  center_loss: 8.574e-05  time: 0.7547  data_time: 0.0001  lr: 0.00046002  max_mem: 6776M
+[05/05 20:37:19] d2.utils.events INFO:  eta: 14:22:18  iter: 001759  total_loss: 0.01794  bev_loss: 0.01786  center_loss: 8.726e-05  time: 0.7547  data_time: 0.0001  lr: 0.0004614  max_mem: 6776M
+[05/05 20:37:34] d2.utils.events INFO:  eta: 14:22:09  iter: 001779  total_loss: 0.01803  bev_loss: 0.01794  center_loss: 8.821e-05  time: 0.7547  data_time: 0.0001  lr: 0.0004628  max_mem: 6776M
+[05/05 20:37:49] d2.utils.events INFO:  eta: 14:21:54  iter: 001799  total_loss: 0.01526  bev_loss: 0.01518  center_loss: 7.8e-05  time: 0.7546  data_time: 0.0001  lr: 0.00046421  max_mem: 6776M
+[05/05 20:38:04] d2.utils.events INFO:  eta: 14:21:46  iter: 001819  total_loss: 0.01705  bev_loss: 0.01696  center_loss: 8.522e-05  time: 0.7547  data_time: 0.0001  lr: 0.00046563  max_mem: 6776M
+[05/05 20:38:19] d2.utils.events INFO:  eta: 14:21:35  iter: 001839  total_loss: 0.01686  bev_loss: 0.01677  center_loss: 8.74e-05  time: 0.7547  data_time: 0.0001  lr: 0.00046708  max_mem: 6776M
+[05/05 20:38:34] d2.utils.events INFO:  eta: 14:21:22  iter: 001859  total_loss: 0.01705  bev_loss: 0.01697  center_loss: 8.526e-05  time: 0.7547  data_time: 0.0001  lr: 0.00046853  max_mem: 6776M
+[05/05 20:38:50] d2.utils.events INFO:  eta: 14:21:07  iter: 001879  total_loss: 0.01505  bev_loss: 0.01498  center_loss: 7.05e-05  time: 0.7548  data_time: 0.0001  lr: 0.00047001  max_mem: 6776M
+[05/05 20:39:05] d2.utils.events INFO:  eta: 14:20:52  iter: 001899  total_loss: 0.0175  bev_loss: 0.01741  center_loss: 8.625e-05  time: 0.7548  data_time: 0.0001  lr: 0.00047149  max_mem: 6776M
+[05/05 20:39:20] d2.utils.events INFO:  eta: 14:20:35  iter: 001919  total_loss: 0.0187  bev_loss: 0.0186  center_loss: 9.923e-05  time: 0.7548  data_time: 0.0001  lr: 0.000473  max_mem: 6776M
+[05/05 20:39:35] d2.utils.events INFO:  eta: 14:20:18  iter: 001939  total_loss: 0.01708  bev_loss: 0.017  center_loss: 7.789e-05  time: 0.7548  data_time: 0.0001  lr: 0.00047452  max_mem: 6776M
+[05/05 20:39:50] d2.utils.events INFO:  eta: 14:20:00  iter: 001959  total_loss: 0.01581  bev_loss: 0.01574  center_loss: 7.203e-05  time: 0.7548  data_time: 0.0001  lr: 0.00047605  max_mem: 6776M
+[05/05 20:40:05] d2.utils.events INFO:  eta: 14:19:45  iter: 001979  total_loss: 0.0169  bev_loss: 0.01682  center_loss: 8.159e-05  time: 0.7549  data_time: 0.0001  lr: 0.0004776  max_mem: 6776M
+[05/05 20:40:21] d2.utils.events INFO:  eta: 14:19:31  iter: 001999  total_loss: 0.01737  bev_loss: 0.01728  center_loss: 8.793e-05  time: 0.7550  data_time: 0.0001  lr: 0.00047917  max_mem: 6776M
+[05/05 20:40:36] d2.utils.events INFO:  eta: 14:19:16  iter: 002019  total_loss: 0.01579  bev_loss: 0.01572  center_loss: 7.917e-05  time: 0.7551  data_time: 0.0001  lr: 0.00048075  max_mem: 6776M
+[05/05 20:40:51] d2.utils.events INFO:  eta: 14:19:01  iter: 002039  total_loss: 0.01455  bev_loss: 0.01449  center_loss: 8.092e-05  time: 0.7551  data_time: 0.0001  lr: 0.00048234  max_mem: 6776M
+[05/05 20:41:06] d2.utils.events INFO:  eta: 14:18:45  iter: 002059  total_loss: 0.01428  bev_loss: 0.0142  center_loss: 7.168e-05  time: 0.7551  data_time: 0.0001  lr: 0.00048395  max_mem: 6776M
+[05/05 20:41:21] d2.utils.events INFO:  eta: 14:18:30  iter: 002079  total_loss: 0.01549  bev_loss: 0.01541  center_loss: 7.652e-05  time: 0.7551  data_time: 0.0001  lr: 0.00048558  max_mem: 6776M
+[05/05 20:41:36] d2.utils.events INFO:  eta: 14:18:10  iter: 002099  total_loss: 0.01583  bev_loss: 0.01575  center_loss: 8.396e-05  time: 0.7551  data_time: 0.0001  lr: 0.00048722  max_mem: 6776M
+[05/05 20:41:51] d2.utils.events INFO:  eta: 14:17:50  iter: 002119  total_loss: 0.01632  bev_loss: 0.01623  center_loss: 8.258e-05  time: 0.7551  data_time: 0.0001  lr: 0.00048887  max_mem: 6776M
+[05/05 20:42:07] d2.utils.events INFO:  eta: 14:17:35  iter: 002139  total_loss: 0.01491  bev_loss: 0.01484  center_loss: 7.914e-05  time: 0.7551  data_time: 0.0001  lr: 0.00049055  max_mem: 6776M
+[05/05 20:42:22] d2.utils.events INFO:  eta: 14:17:20  iter: 002159  total_loss: 0.01527  bev_loss: 0.0152  center_loss: 7.708e-05  time: 0.7551  data_time: 0.0001  lr: 0.00049223  max_mem: 6776M
+[05/05 20:42:37] d2.utils.events INFO:  eta: 14:17:06  iter: 002179  total_loss: 0.01436  bev_loss: 0.01428  center_loss: 7.451e-05  time: 0.7551  data_time: 0.0001  lr: 0.00049393  max_mem: 6776M
+[05/05 20:42:52] d2.utils.events INFO:  eta: 14:16:51  iter: 002199  total_loss: 0.01511  bev_loss: 0.01503  center_loss: 8.254e-05  time: 0.7550  data_time: 0.0001  lr: 0.00049565  max_mem: 6776M
+[05/05 20:43:07] d2.utils.events INFO:  eta: 14:16:38  iter: 002219  total_loss: 0.01607  bev_loss: 0.01598  center_loss: 8.131e-05  time: 0.7550  data_time: 0.0001  lr: 0.00049738  max_mem: 6776M
+[05/05 20:43:22] d2.utils.events INFO:  eta: 14:16:27  iter: 002239  total_loss: 0.01652  bev_loss: 0.01644  center_loss: 7.674e-05  time: 0.7550  data_time: 0.0001  lr: 0.00049913  max_mem: 6776M
+[05/05 20:43:37] d2.utils.events INFO:  eta: 14:16:14  iter: 002259  total_loss: 0.01642  bev_loss: 0.01634  center_loss: 7.877e-05  time: 0.7550  data_time: 0.0001  lr: 0.00050089  max_mem: 6776M
+[05/05 20:43:52] d2.utils.events INFO:  eta: 14:16:00  iter: 002279  total_loss: 0.01524  bev_loss: 0.01516  center_loss: 7.79e-05  time: 0.7550  data_time: 0.0001  lr: 0.00050267  max_mem: 6776M
+[05/05 20:44:07] d2.utils.events INFO:  eta: 14:15:50  iter: 002299  total_loss: 0.01725  bev_loss: 0.01715  center_loss: 8.692e-05  time: 0.7550  data_time: 0.0001  lr: 0.00050446  max_mem: 6776M
+[05/05 20:44:22] d2.utils.events INFO:  eta: 14:15:38  iter: 002319  total_loss: 0.01493  bev_loss: 0.01485  center_loss: 7.522e-05  time: 0.7551  data_time: 0.0001  lr: 0.00050627  max_mem: 6776M
+[05/05 20:44:38] d2.utils.events INFO:  eta: 14:15:23  iter: 002339  total_loss: 0.01558  bev_loss: 0.01551  center_loss: 7.672e-05  time: 0.7551  data_time: 0.0001  lr: 0.00050809  max_mem: 6776M
+[05/05 20:44:53] d2.utils.events INFO:  eta: 14:15:06  iter: 002359  total_loss: 0.01604  bev_loss: 0.01596  center_loss: 7.616e-05  time: 0.7551  data_time: 0.0001  lr: 0.00050993  max_mem: 6776M
+[05/05 20:45:08] d2.utils.events INFO:  eta: 14:14:48  iter: 002379  total_loss: 0.01617  bev_loss: 0.01609  center_loss: 7.43e-05  time: 0.7551  data_time: 0.0001  lr: 0.00051178  max_mem: 6776M
+[05/05 20:45:23] d2.utils.events INFO:  eta: 14:14:35  iter: 002399  total_loss: 0.0157  bev_loss: 0.01562  center_loss: 8.039e-05  time: 0.7551  data_time: 0.0001  lr: 0.00051365  max_mem: 6776M
+[05/05 20:45:38] d2.utils.events INFO:  eta: 14:14:19  iter: 002419  total_loss: 0.01395  bev_loss: 0.01388  center_loss: 7.256e-05  time: 0.7551  data_time: 0.0001  lr: 0.00051553  max_mem: 6776M
+[05/05 20:45:53] d2.utils.events INFO:  eta: 14:14:05  iter: 002439  total_loss: 0.01513  bev_loss: 0.01505  center_loss: 7.687e-05  time: 0.7551  data_time: 0.0001  lr: 0.00051743  max_mem: 6776M
+[05/05 20:46:09] d2.utils.events INFO:  eta: 14:13:52  iter: 002459  total_loss: 0.01633  bev_loss: 0.01625  center_loss: 8.404e-05  time: 0.7552  data_time: 0.0001  lr: 0.00051934  max_mem: 6776M
+[05/05 20:46:24] d2.utils.events INFO:  eta: 14:13:37  iter: 002479  total_loss: 0.01517  bev_loss: 0.01509  center_loss: 7.793e-05  time: 0.7553  data_time: 0.0001  lr: 0.00052127  max_mem: 6776M
+[05/05 20:46:39] d2.utils.events INFO:  eta: 14:13:22  iter: 002499  total_loss: 0.01577  bev_loss: 0.01569  center_loss: 7.908e-05  time: 0.7553  data_time: 0.0001  lr: 0.00052321  max_mem: 6776M
+[05/05 20:46:54] d2.utils.events INFO:  eta: 14:13:06  iter: 002519  total_loss: 0.0154  bev_loss: 0.01531  center_loss: 7.946e-05  time: 0.7553  data_time: 0.0001  lr: 0.00052516  max_mem: 6776M
+[05/05 20:47:09] d2.utils.events INFO:  eta: 14:12:51  iter: 002539  total_loss: 0.01591  bev_loss: 0.01582  center_loss: 8.131e-05  time: 0.7554  data_time: 0.0001  lr: 0.00052714  max_mem: 6776M
+[05/05 20:47:25] d2.utils.events INFO:  eta: 14:12:35  iter: 002559  total_loss: 0.01447  bev_loss: 0.01439  center_loss: 7.779e-05  time: 0.7554  data_time: 0.0001  lr: 0.00052912  max_mem: 6776M
+[05/05 20:47:40] d2.utils.events INFO:  eta: 14:12:19  iter: 002579  total_loss: 0.01485  bev_loss: 0.01477  center_loss: 8.077e-05  time: 0.7554  data_time: 0.0001  lr: 0.00053112  max_mem: 6776M
+[05/05 20:47:55] d2.utils.events INFO:  eta: 14:12:02  iter: 002599  total_loss: 0.01545  bev_loss: 0.01537  center_loss: 7.842e-05  time: 0.7554  data_time: 0.0001  lr: 0.00053314  max_mem: 6776M
+[05/05 20:48:10] d2.utils.events INFO:  eta: 14:11:50  iter: 002619  total_loss: 0.01413  bev_loss: 0.01405  center_loss: 7.742e-05  time: 0.7554  data_time: 0.0001  lr: 0.00053517  max_mem: 6776M
+[05/05 20:48:25] d2.utils.events INFO:  eta: 14:11:36  iter: 002639  total_loss: 0.01647  bev_loss: 0.01638  center_loss: 8.669e-05  time: 0.7553  data_time: 0.0001  lr: 0.00053722  max_mem: 6776M
+[05/05 20:48:40] d2.utils.events INFO:  eta: 14:11:19  iter: 002659  total_loss: 0.01503  bev_loss: 0.01496  center_loss: 8.115e-05  time: 0.7553  data_time: 0.0001  lr: 0.00053928  max_mem: 6776M
+[05/05 20:48:55] d2.utils.events INFO:  eta: 14:11:04  iter: 002679  total_loss: 0.01517  bev_loss: 0.0151  center_loss: 7.681e-05  time: 0.7553  data_time: 0.0001  lr: 0.00054135  max_mem: 6776M
+[05/05 20:49:10] d2.utils.events INFO:  eta: 14:10:49  iter: 002699  total_loss: 0.01534  bev_loss: 0.01527  center_loss: 7.536e-05  time: 0.7553  data_time: 0.0001  lr: 0.00054344  max_mem: 6776M
+[05/05 20:49:25] d2.utils.events INFO:  eta: 14:10:35  iter: 002719  total_loss: 0.01571  bev_loss: 0.01562  center_loss: 8.531e-05  time: 0.7553  data_time: 0.0001  lr: 0.00054555  max_mem: 6776M
+[05/05 20:49:40] d2.utils.events INFO:  eta: 14:10:19  iter: 002739  total_loss: 0.0144  bev_loss: 0.01432  center_loss: 7.724e-05  time: 0.7553  data_time: 0.0001  lr: 0.00054766  max_mem: 6776M
+[05/05 20:49:55] d2.utils.events INFO:  eta: 14:10:04  iter: 002759  total_loss: 0.0143  bev_loss: 0.01422  center_loss: 7.01e-05  time: 0.7553  data_time: 0.0001  lr: 0.0005498  max_mem: 6776M
+[05/05 20:50:11] d2.utils.events INFO:  eta: 14:09:51  iter: 002779  total_loss: 0.01591  bev_loss: 0.01583  center_loss: 8.072e-05  time: 0.7553  data_time: 0.0001  lr: 0.00055195  max_mem: 6776M
+[05/05 20:50:26] d2.utils.events INFO:  eta: 14:09:41  iter: 002799  total_loss: 0.01416  bev_loss: 0.01409  center_loss: 6.928e-05  time: 0.7553  data_time: 0.0001  lr: 0.00055411  max_mem: 6776M
+[05/05 20:50:41] d2.utils.events INFO:  eta: 14:09:26  iter: 002819  total_loss: 0.01482  bev_loss: 0.01474  center_loss: 7.479e-05  time: 0.7554  data_time: 0.0001  lr: 0.00055629  max_mem: 6776M
+[05/05 20:50:56] d2.utils.events INFO:  eta: 14:09:11  iter: 002839  total_loss: 0.01534  bev_loss: 0.01527  center_loss: 7.981e-05  time: 0.7554  data_time: 0.0001  lr: 0.00055848  max_mem: 6776M
+[05/05 20:51:11] d2.utils.events INFO:  eta: 14:08:54  iter: 002859  total_loss: 0.01506  bev_loss: 0.01499  center_loss: 7.532e-05  time: 0.7554  data_time: 0.0001  lr: 0.00056069  max_mem: 6776M
+[05/05 20:51:26] d2.utils.events INFO:  eta: 14:08:37  iter: 002879  total_loss: 0.0157  bev_loss: 0.01561  center_loss: 8.334e-05  time: 0.7554  data_time: 0.0001  lr: 0.00056291  max_mem: 6776M
+[05/05 20:51:41] d2.utils.events INFO:  eta: 14:08:23  iter: 002899  total_loss: 0.01474  bev_loss: 0.01465  center_loss: 8.22e-05  time: 0.7554  data_time: 0.0001  lr: 0.00056514  max_mem: 6776M
+[05/05 20:51:57] d2.utils.events INFO:  eta: 14:08:06  iter: 002919  total_loss: 0.01336  bev_loss: 0.01329  center_loss: 6.954e-05  time: 0.7554  data_time: 0.0001  lr: 0.00056739  max_mem: 6776M
+[05/05 20:52:12] d2.utils.events INFO:  eta: 14:07:55  iter: 002939  total_loss: 0.0131  bev_loss: 0.01302  center_loss: 7.31e-05  time: 0.7554  data_time: 0.0001  lr: 0.00056966  max_mem: 6776M
+[05/05 20:52:27] d2.utils.events INFO:  eta: 14:07:41  iter: 002959  total_loss: 0.01441  bev_loss: 0.01434  center_loss: 7.413e-05  time: 0.7555  data_time: 0.0001  lr: 0.00057194  max_mem: 6776M
+[05/05 20:52:42] d2.utils.events INFO:  eta: 14:07:26  iter: 002979  total_loss: 0.01336  bev_loss: 0.0133  center_loss: 7.354e-05  time: 0.7555  data_time: 0.0001  lr: 0.00057423  max_mem: 6776M
+[05/05 20:52:57] d2.utils.events INFO:  eta: 14:07:11  iter: 002999  total_loss: 0.01652  bev_loss: 0.01644  center_loss: 8.604e-05  time: 0.7555  data_time: 0.0001  lr: 0.00057654  max_mem: 6776M
+[05/05 20:53:13] d2.utils.events INFO:  eta: 14:06:56  iter: 003019  total_loss: 0.01502  bev_loss: 0.01495  center_loss: 7.652e-05  time: 0.7555  data_time: 0.0001  lr: 0.00057886  max_mem: 6776M
+[05/05 20:53:28] d2.utils.events INFO:  eta: 14:06:39  iter: 003039  total_loss: 0.01421  bev_loss: 0.01414  center_loss: 7.089e-05  time: 0.7555  data_time: 0.0001  lr: 0.0005812  max_mem: 6776M
+[05/05 20:53:43] d2.utils.events INFO:  eta: 14:06:22  iter: 003059  total_loss: 0.01354  bev_loss: 0.01347  center_loss: 7.126e-05  time: 0.7555  data_time: 0.0001  lr: 0.00058355  max_mem: 6776M
+[05/05 20:53:58] d2.utils.events INFO:  eta: 14:06:09  iter: 003079  total_loss: 0.01652  bev_loss: 0.01644  center_loss: 7.672e-05  time: 0.7556  data_time: 0.0001  lr: 0.00058592  max_mem: 6776M
+[05/05 20:54:04] d2.engine.hooks INFO: Overall training speed: 3085 iterations in 0:38:51 (0.7557 s / it)
+[05/05 20:54:04] d2.engine.hooks INFO: Total training time: 0:38:52 (0:00:00 on hooks)
+[05/05 20:54:04] d2.utils.events INFO:  eta: 14:06:03  iter: 003087  total_loss: 0.01555  bev_loss: 0.01548  center_loss: 7.672e-05  time: 0.7556  data_time: 0.0001  lr: 0.00058675  max_mem: 6776M

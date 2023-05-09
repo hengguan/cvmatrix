@@ -1,0 +1,148 @@
+__base__: ["configs/_base_/solver/base.yaml"]
+
+model:
+  type: 'BEV'   # optional type only (DETECTOR, SEGMENTATION, MULTITASK, BEV)
+  name: CrossViewTransformerExp
+  device: cuda
+  dim_last: 64
+  outputs:
+    bev: [0, 1]
+    center: [1, 2]
+  weights: ""
+  backbone:
+    name: "EfficientNetEPExtractor"
+    # arch: 'regnety_016g'
+    # output_layers: ["s3", "s4"]
+    # input_size: [384, 800]
+    arch: efficientnet-b3
+    output_layers: ['reduction_5', 'reduction_4']
+    input_size: [288, 640]
+
+  transformer:
+    name: "CrossViewTransformer"
+    dim: 128
+    scale: 1.0
+    middle: [2, 2]
+    cross_view:
+      heads: 4
+      dim_head: 32
+      qkv_bias: True
+      skip: True
+      no_image_features: False
+      image_height: 384
+      image_width: 800
+
+    bev_embedding:
+      sigma: 1.0
+      bev_height: 200
+      bev_width: 200
+      h_meters: 100
+      w_meters: 100
+      offset: 0.0
+      decoder_blocks: [128, 128, 64]
+
+  head:
+    name: CrossViewTransformerHead
+    dim: 128
+    blocks: [128, 128, 64]
+    residual: True
+    factor: 2
+
+  losses:
+    - 
+        name: BinarySegmentationLoss
+        label_indices: [[4, 5, 6, 7, 8, 10, 11]]
+        gamma: 2.0
+        alpha: -1.0
+        min_visibility: 2
+        weight: 1.0
+    - 
+        name: CenterLoss
+        weight: 0.1
+        gamma: 2.0
+        min_visibility: 2
+    
+datasets:
+  name: NuscenesGenerated
+  num_classes: 12                         # do not modify :)
+  # used to get_split
+  version: 'v1.0-trainval'                # 'v1.0-mini' for debugging
+  # used to generate dataset
+  cameras: [[0, 1, 2, 3, 4, 5]]
+  # required for train/eval
+  # Takes the form [[i, j, ...], [p, q, ...]]
+  # where [i, j, ...] are indices of individual classes (car, truck, ...),
+  # and will be grouped into one semantic class (vehicle).
+  label_indices: [[4, 5, 6, 7, 8, 10, 11]] 
+  normalize:
+    norm_resnet: False
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+    to_rgb: False
+  train:
+    dataset_dir: "D:\\data\\nuScenes\\nuscenes"
+    labels_root: "D:\\data\\nuScenes\\cvt_labels"
+    labels_dir_name: "cvt_labels_nuscenes_v2"
+    image:
+      # h: 384
+      # w: 800
+      # top_crop: 66
+      h: 288
+      w: 640
+      top_crop: 72
+    augment: 'none'
+  test: 
+    dataset_dir: "D:\\data\\nuScenes\\nuscenes"
+    labels_root: "D:\\data\\nuScenes\\cvt_labels"
+    labels_dir_name: "cvt_labels_nuscenes_v2"
+    image:
+      h: 768
+      w: 1600
+      top_crop: 132
+    augment: 'none'
+
+dataloader:
+  batch_size: 1
+  num_workers: 4
+  pin_memory: True
+  prefetch_factor: 4
+
+SOLVER:
+  optimizer_name: AdamW
+  optimizer:
+    lr: 0.004
+    weight_decay: 0.0000001
+  LR_SCHEDULER_NAME: "OneCycleLR"
+  scheduler:
+    div_factor: 10                                      # starts at lr / 10
+    pct_start: 0.3                                      # reaches lr at 30% of total steps
+    final_div_factor: 10                                # ends at lr / 10 / 10
+    max_lr: 0.004
+    total_steps: 50000
+    cycle_momentum: False
+  
+  IMS_PER_BATCH: 16
+  BASE_LR: 0.01  # Note that RetinaNet uses a different default learning rate
+  STEPS: [60000, 80000]
+  MAX_ITER: 90000
+  REFERENCE_WORLD_SIZE: 0
+
+trainer:
+  max_steps: 500001
+  log_every_n_steps: 50
+
+  gpus: -1
+  precision: 32
+
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  check_val_every_n_epoch: 10
+  val_check_interval: 1.0
+  num_sanity_val_steps: 0
+  gradient_clip_val: 5.0
+  sync_batchnorm: False
+
+INPUT:
+  MIN_SIZE_TRAIN: [640, 672, 704, 736, 768, 800]
+OUTPUT_DIR: "./output"
+VERSION: 2

@@ -1,0 +1,134 @@
+data:
+  bev:
+    h: 200
+    w: 200
+    h_meters: 100.0
+    w_meters: 100.0
+    offset: 0.0
+  augment: 'none'
+  image:
+    h: 288
+    w: 640
+    top_crop: 72
+
+model:
+  _target_: cvmatrix.model.bev.cvt.CrossViewTransformerExp
+  dim_last: 64
+  outputs:
+    bev: [0, 1]
+    center: [1, 2]
+
+  input_size: [288, 640]
+  backbone:
+      _target_: cvmatrix.model.backbone.efficientnet.EfficientNetEPExtractor
+      
+      model_name: efficientnet-b3
+      output_layers: ['reduction_5', 'reduction_4']
+
+  transformer:
+    _target_: cvmatrix.model.transformer.cross_view_transformer.CrossViewTransformer
+    dim: 128
+    scale: 1.0
+    middle: [2, 2]
+    feats_shapes: [[1, 384, 9, 20],[1, 136, 18, 40]]
+    cross_view:
+      heads: 4
+      dim_head: 32
+      qkv_bias: True
+      skip: True
+      no_image_features: False
+      image_height: ${data.image.h}
+      image_width: ${data.image.w}
+
+    bev_embedding:
+      sigma: 1.0
+      bev_height: ${data.bev.h}
+      bev_width: ${data.bev.w}
+      h_meters: ${data.bev.h_meters}
+      w_meters: ${data.bev.w_meters}
+      offset: ${data.bev.offset}
+      blocks: ${model.head.blocks}
+
+  head:
+    _target_: cvmatrix.model.head.cvt_head.CrossViewTransformerHead
+    dim: ${model.transformer.dim}
+    blocks: [128, 128, 64]
+    residual: True
+    factor: 2
+  
+  losses:
+    - 
+      type: BinarySegmentationLoss
+      label_indices: [[4, 5, 6, 7, 8, 10, 11]]
+      gamma: 2.0
+      alpha: -1.0
+      min_visibility: 2
+      weight: 1.0
+    - 
+      type: CenterLoss
+      weight: 0.1
+      gamma: 2.0
+      min_visibility: 2
+
+train:
+  output_dir: "./output"
+  init_checkpoint: ""
+  max_iter: 90000
+  amp: 
+    enabled: False   # options for Automatic Mixed Precision
+  ddp:   # options for DistributedDataParallel
+      broadcast_buffers: False,
+      find_unused_parameters: False,
+      fp16_compression: False,
+
+  checkpointer: 
+    period: 5000
+    max_to_keep: 100   # options for PeriodicCheckpointer
+  eval_period: 5000
+  log_period: 20
+  device: "cuda"
+
+optimizer:
+  _target_: torch.optim.AdamW
+  params:
+    _target_: cvmatrix.solver.build.get_simple_optimizer_params
+    model: none
+  lr: 0.004
+  weight_decay: 0.0000001
+
+# OneCycleLR
+lr_multiplier:
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  optimizer: ${optimizer}
+  div_factor: 10                                      # starts at lr / 10
+  pct_start: 0.3                                      # reaches lr at 30% of total steps
+  final_div_factor: 10                                # ends at lr / 10 / 10
+  max_lr: ${optimizer.lr}
+  total_steps: 500001
+  cycle_momentum: False
+
+dataloader:
+  train:
+    _target_: cvmatrix.datasets.build.build_train_dataloader
+    test_mode: False
+    dataset:
+      _target_:  cvmatrix.datasets.nuscenes_generated.NuscenesGenerated
+      # used to get_split
+      version: 'v1.0-trainval'                # 'v1.0-mini' for debugging
+      num_classes: 12                         # do not modify :)
+      test_mode: ${dataloader.train.test_mode}
+      normalize:
+        norm_resnet: False
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+        to_rgb: False
+      data_dir: "D:\\data\\nuScenes\\nuscenes"
+      labels_root: "D:\\data\\nuScenes\\cvt_labels"
+      labels_dir_name: "cvt_labels_nuscenes_v2"
+      image: ${data.image}
+      augment: 'none'
+    loader_cfg:
+      batch_size: 1
+      num_workers: 0
+      pin_memory: True
+      prefetch_factor: 4
