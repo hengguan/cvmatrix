@@ -7,7 +7,7 @@ Usage:
 python benchmark.py --config-file config.yaml --task train/eval/data [optional DDP flags]
 ```
 
-* `analyze_model.py`
+* `model_analyze.py`
 
 Analyze FLOPs, parameters, activations of a cvmatrix model.  See its `--help` for usage.
 
