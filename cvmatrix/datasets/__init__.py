@@ -1,4 +1,4 @@
-from .build import build_dataloader, DATASETS_REGISTRY
+from .build import build_dataloader, DATASETS_REGISTRY, build_test_dataloader
 from .nuscenes_generated import NuscenesGenerated
 from .nuscenes_generated_4d import get_data
 from .nusc_lss_dataset import LSSSegDataset

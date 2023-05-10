@@ -104,13 +104,14 @@ def build_dataloader(cfg, loader_cfg, **kwargs):
 
 def build_test_dataloader(cfg, split='val', subsample=5, is_val4d=False):
     datasets = []
-    data_cfg = cfg.datasets.copy()
+    data_cfg = cfg.copy()
+    cfg.split = 'val'
     assert 'type' in data_cfg.keys(), f'"type" not be assigned.'
     dataset_name = data_cfg.pop("type")
     if is_val4d:
         data_cfg.update(dict(num_time=1))
 
-    datasets = DATASETS_REGISTRY.get(dataset_name)(**data_cfg, split=split)
+    datasets = DATASETS_REGISTRY.get(dataset_name)(**data_cfg)
     if not isinstance(datasets, list):
         datasets = [datasets]
 
