@@ -81,26 +81,28 @@ def build_dataset(cfg, **kwargs):
     return DATASETS_REGISTRY.get(_name)(**_cfg, **kwargs)
 
 
-def build_dataloader(cfg, loader_cfg, **kwargs):
+def build_dataloader(cfg, **kwargs):
     datasets = []
-    datasets = build_dataset(cfg)
-    if not isinstance(datasets, list):
-        datasets = [datasets]
+    data_cfg = cfg.pop("dataset")
+    data_cfg = omegaconf.OmegaConf.to_object(data_cfg)
+    print(type(data_cfg))
+    assert isinstance(data_cfg, list) or isinstance(data_cfg, dict), \
+        "dataset config format is not true..."
 
+    datasets = [build_dataset(_cfg) for _cfg in data_cfg] if isinstance(datasets, list) \
+        else [build_dataset(data_cfg)]
     dataset = torchdata.ConcatDataset(datasets)
 
-    for k, v in loader_cfg.items():
+    for k, v in cfg.items():
         if isinstance(v, str):
-            loader_cfg[k] = eval(v)
+            cfg[k] = eval(v)
 
-    if loader_cfg['num_workers'] == 0:
-        loader_cfg['prefetch_factor'] = 2
+    if cfg['num_workers'] == 0:
+        cfg['prefetch_factor'] = 2
 
     # TODO: shuffle should be False in non-training step 
-    shuffle = True
-    return torch.utils.data.DataLoader(
-        dataset, shuffle=shuffle,
-        **loader_cfg)
+    return torch.utils.data.DataLoader(dataset, **cfg)
+
 
 def build_test_dataloader(cfg, split='val', subsample=5, is_val4d=False):
     datasets = []

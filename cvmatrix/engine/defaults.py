@@ -546,7 +546,7 @@ class DefaultTrainer(TrainerBase):
         Overwrite it if you'd like a different data loader.
         """
         # return build_detection_train_loader(cfg)
-        return build_dataloader(cfg.datasets.train, cfg.dataloader)
+        return build_dataloader(cfg.train_loader)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
@@ -558,7 +558,7 @@ class DefaultTrainer(TrainerBase):
         Overwrite it if you'd like a different data loader.
         """
         # return build_detection_test_loader(cfg, dataset_name)
-        return build_dataloader(cfg, split='test')
+        return build_dataloader(cfg.val_loader)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name):
