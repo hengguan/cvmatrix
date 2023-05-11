@@ -85,11 +85,11 @@ def build_dataloader(cfg, **kwargs):
     datasets = []
     data_cfg = cfg.pop("dataset")
     data_cfg = omegaconf.OmegaConf.to_object(data_cfg)
-    print(type(data_cfg))
+
     assert isinstance(data_cfg, list) or isinstance(data_cfg, dict), \
         "dataset config format is not true..."
 
-    datasets = [build_dataset(_cfg) for _cfg in data_cfg] if isinstance(datasets, list) \
+    datasets = [build_dataset(_cfg) for _cfg in data_cfg] if isinstance(data_cfg, list) \
         else [build_dataset(data_cfg)]
     dataset = torchdata.ConcatDataset(datasets)
 

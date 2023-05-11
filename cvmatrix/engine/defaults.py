@@ -23,7 +23,7 @@ from torch.nn.parallel import DistributedDataParallel
 # import cvmatrix.data.transforms as T
 from cvmatrix.utils.checkpoint import DetectionCheckpointer
 from cvmatrix.utils.config import LazyConfig
-from cvmatrix.datasets import (
+from cvmatrix.data import (
     # MetadataCatalog,
     # build_detection_test_loader,
     # build_detection_train_loader,

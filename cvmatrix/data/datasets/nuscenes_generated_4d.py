@@ -15,8 +15,8 @@ import numpy as np
 
 from pathlib import Path
 
-from .build import DATASETS_REGISTRY
-from .transforms.nuscenes_cvt import LoadDataTransform, Sample
+from ..build import DATASETS_REGISTRY
+from ..transforms.nuscenes_cvt import LoadDataTransform, Sample
 
 
 @DATASETS_REGISTRY.register()

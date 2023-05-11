@@ -12,11 +12,11 @@ import cv2
 
 from cvmatrix.model import build_model
 from cvmatrix.utils.config import LazyConfig
-# from cvmatrix.datasets.build import DATASETS_REGISTRY
+# from cvmatrix.data.build import DATASETS_REGISTRY
 from cvmatrix.utils.checkpoint import DetectionCheckpointer
 from vis.nuscenes_stich_viz import NuScenesStitchViz
 from vis.common import to_image
-from cvmatrix.datasets.changan_dataset import CADataset
+from cvmatrix.data.changan_dataset import CADataset
 
 """
 example: 

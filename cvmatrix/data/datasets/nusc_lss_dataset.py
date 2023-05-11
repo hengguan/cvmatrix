@@ -21,6 +21,7 @@ from cvmatrix.model.utils.geometry import (
     normalize_img, 
     gen_dx_bx
 )
+from ..build import DATASETS_REGISTRY
 
 
 class NuscData(torch.utils.data.Dataset):
@@ -240,9 +241,6 @@ class SegmentationData(NuscData):
         binimg = self.get_binimg(rec)
         
         return imgs, rots, trans, intrins, post_rots, post_trans, binimg
-
-
-from .build import DATASETS_REGISTRY
 
 
 @DATASETS_REGISTRY.register()

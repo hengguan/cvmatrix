@@ -15,8 +15,8 @@ from pathlib import Path
 from torch.utils.data import Dataset
 
 # from cvmatrix.utils.file_io import PathManager
-from .build import DATASETS_REGISTRY
-from .transforms.nuscenes_cvt import LoadDataTransform, Sample
+from ..build import DATASETS_REGISTRY
+from ..transforms.nuscenes_cvt import LoadDataTransform, Sample
 
 
 @DATASETS_REGISTRY.register()

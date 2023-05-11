@@ -109,10 +109,10 @@ lr_multiplier:
 
 dataloader:
   train:
-    _target_: cvmatrix.datasets.build.build_train_dataloader
+    _target_: cvmatrix.data.build.build_train_dataloader
     test_mode: False
     dataset:
-      _target_:  cvmatrix.datasets.nuscenes_generated.NuscenesGenerated
+      _target_:  cvmatrix.data.nuscenes_generated.NuscenesGenerated
       # used to get_split
       version: 'v1.0-trainval'                # 'v1.0-mini' for debugging
       num_classes: 12                         # do not modify :)

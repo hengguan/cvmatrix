@@ -5,10 +5,10 @@ import mmcv
 import numpy as np
 from torch.utils.data import Dataset
 
-from .build import DATASETS_REGISTRY
+from ..build import DATASETS_REGISTRY
 
 from cvmatrix.structures.bbox import get_box_type
-from .pipelines.compose import Compose
+from ..pipelines.compose import Compose
 
 
 @DATASETS_REGISTRY.register()

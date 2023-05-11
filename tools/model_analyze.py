@@ -10,7 +10,7 @@ from omegaconf.dictconfig import DictConfig
 
 from cvmatrix.utils.checkpoint import DetectionCheckpointer
 from cvmatrix.utils.config import LazyConfig, instantiate
-from cvmatrix.datasets import build_test_dataloader
+from cvmatrix.data import build_test_dataloader
 from cvmatrix.engine import default_argument_parser
 from cvmatrix.model import build_model
 from cvmatrix.utils.analysis import (

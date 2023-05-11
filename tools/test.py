@@ -24,7 +24,7 @@ from torchmetrics import MetricCollection
 
 from cvmatrix.model import build_model
 from cvmatrix.utils.config import LazyConfig
-from cvmatrix.datasets.build import DATASETS_REGISTRY
+from cvmatrix.data.build import DATASETS_REGISTRY
 from cvmatrix.utils.checkpoint import DetectionCheckpointer
 # from vis.nuscenes_viz import NuScenesViz
 from cvmatrix.evaluation.build import build_evaluator

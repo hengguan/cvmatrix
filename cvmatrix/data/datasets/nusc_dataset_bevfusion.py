@@ -9,7 +9,7 @@ import torch
 from nuscenes.utils.data_classes import Box as NuScenesBox
 from pyquaternion import Quaternion
 
-from .build import DATASETS_REGISTRY
+from ..build import DATASETS_REGISTRY
 from cvmatrix.structures.bbox import LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
 

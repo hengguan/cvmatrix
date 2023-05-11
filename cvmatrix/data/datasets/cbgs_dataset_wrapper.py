@@ -1,6 +1,6 @@
 import numpy as np
 
-from .build import (
+from ..build import (
     DATASETS_REGISTRY,
     build_dataset
 )

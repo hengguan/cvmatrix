@@ -16,13 +16,13 @@ from torch.nn.parallel import DistributedDataParallel
 
 from cvmatrix.utils.checkpoint import DetectionCheckpointer
 from cvmatrix.utils.config import LazyConfig, instantiate
-from cvmatrix.datasets import (
+from cvmatrix.data import (
     DatasetFromList,
     # build_detection_test_loader,
     # build_detection_train_loader,
     build_dataloader
 )
-from cvmatrix.datasets.benchmark import DataLoaderBenchmark
+from cvmatrix.data.benchmark import DataLoaderBenchmark
 from cvmatrix.engine import AMPTrainer, SimpleTrainer, default_argument_parser, hooks, launch
 from cvmatrix.model import build_model
 from cvmatrix.solver import build_optimizer

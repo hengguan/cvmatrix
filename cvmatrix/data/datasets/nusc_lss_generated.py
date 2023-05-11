@@ -27,7 +27,7 @@ from cvmatrix.model.utils.geometry import (
     normalize_img, 
     gen_dx_bx
 )
-from .build import DATASETS_REGISTRY
+from ..build import DATASETS_REGISTRY
 
 
 @DATASETS_REGISTRY.register()

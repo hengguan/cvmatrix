@@ -17,7 +17,7 @@ from tqdm import tqdm
 from pathlib import Path
 import json
 
-from cvmatrix.datasets.transforms.nuscenes_cvt import get_pose
+from cvmatrix.data.transforms.nuscenes_cvt import get_pose
 
 STATIC = ['lane', 'road_segment']
 DIVIDER = ['road_divider', 'lane_divider']
