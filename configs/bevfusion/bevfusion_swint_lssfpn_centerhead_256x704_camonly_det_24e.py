@@ -12,10 +12,6 @@ model['encoders']['camera']['vtransform'].update(
     dict(
         type='LSSTransform',
         image_size=image_size,
-        xbound=[-51.2, 51.2, 0.8],
-        ybound=[-51.2, 51.2, 0.8],
-        zbound=[-10.0, 10.0, 20.0],
-        dbound=[1.0, 60.0, 1.0],
     )
 )
 
@@ -60,7 +56,6 @@ model.update(
             common_heads=dict(reg=[2, 2], height=[1, 2], dim=[3, 2], rot=[2, 2], vel=[2, 2]),
             share_conv_channel=64,
             bbox_coder=dict(
-                type='CenterPointBBoxCoder',
                 pc_range=point_cloud_range,
                 post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
                 max_num=500,
@@ -90,7 +85,7 @@ model.update(
 )
 
 dataset_type="NuScenesDataset"
-dataset_root="D:\\data\\nuScenes\\nuscenes\\"
+dataset_root="/home/gh/workspace/data/nuscenes/trainval/"
 gt_paste_stop_epoch=-1
 reduce_beams=32
 load_dim=5
@@ -133,20 +128,20 @@ max_epochs=24
 
 train_pipelines=[
     dict(type="LoadMultiViewImageFromFiles", to_float32=True),
-    dict(type="LoadPointsFromFile",
-        coord_type="LIDAR",
-        load_dim=load_dim,
-        use_dim=use_dim,
-        reduce_beams=reduce_beams,
-        load_augmented=load_augmented),
-    dict(type="LoadPointsFromMultiSweeps",
-        sweeps_num=9,
-        load_dim=load_dim,
-        use_dim=use_dim,
-        reduce_beams=reduce_beams,
-        pad_empty_sweeps=True,
-        remove_close=True,
-        load_augmented=load_augmented,),
+    # dict(type="LoadPointsFromFile",
+    #     coord_type="LIDAR",
+    #     load_dim=load_dim,
+    #     use_dim=use_dim,
+    #     reduce_beams=reduce_beams,
+    #     load_augmented=load_augmented),
+    # dict(type="LoadPointsFromMultiSweeps",
+    #     sweeps_num=9,
+    #     load_dim=load_dim,
+    #     use_dim=use_dim,
+    #     reduce_beams=reduce_beams,
+    #     pad_empty_sweeps=True,
+    #     remove_close=True,
+    #     load_augmented=load_augmented,),
     dict(
         type="LoadAnnotations3D",
         with_bbox_3d=True,
@@ -172,13 +167,13 @@ train_pipelines=[
                 car=2, truck=3, construction_vehicle=7, bus=4, trailer=6,
                 barrier=2, motorcycle=6, bicycle=6, pedestrian=2, traffic_cone=2
             ),
-            points_loader=dict(
-                type="LoadPointsFromFile",
-                coord_type="LIDAR",
-                load_dim=load_dim,
-                use_dim=use_dim,
-                reduce_beams=reduce_beams,
-            )
+            # points_loader=dict(
+            #     type="LoadPointsFromFile",
+            #     coord_type="LIDAR",
+            #     load_dim=load_dim,
+            #     use_dim=use_dim,
+            #     reduce_beams=reduce_beams,
+            # )
         )
     ),
     dict(
@@ -205,7 +200,7 @@ train_pipelines=[
     #     classes=map_classes,
     # ),
     dict(type="RandomFlip3D"),
-    dict(type="PointsRangeFilter",  point_cloud_range=point_cloud_range,),
+    # dict(type="PointsRangeFilter",  point_cloud_range=point_cloud_range,),
     dict(type="ObjectRangeFilter", point_cloud_range=point_cloud_range,),
     dict(type="ObjectNameFilter", classes=object_classes,),
     dict(type="ImageNormalize", mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -215,17 +210,28 @@ train_pipelines=[
         prob=augment2d["gridmask"]["prob"],
         fixed_prob=augment2d["gridmask"]["fixed_prob"],
     ),
-    dict(type="PointShuffle"),
+    # dict(type="PointShuffle"),
     dict(type="DefaultFormatBundle3D", classes=object_classes,),
     dict(type="Collect3D", 
-        keys=["img", "points", "gt_bboxes_3d", "gt_labels_3d"],#, "gt_masks_bev"
+        keys=["img", "gt_bboxes_3d", "gt_labels_3d"],#, "gt_masks_bev"
         meta_keys=["camera_intrinsics", "camera2ego", "lidar2ego", "lidar2camera", 
                 "camera2lidar", "lidar2image", "img_aug_matrix", "lidar_aug_matrix"]
     )
 ]
 
-datasets = dict(
-    train=dict(
+# datasets = dict(
+#     train=dict(
+        
+#     )
+# )
+
+train_loader=dict(
+    batch_size=1,
+    num_workers=1,
+    pin_memory=True,
+    prefetch_factor=4,
+    shuffle=True,
+    dataset=dict(
         type="CBGSDataset",
         dataset=dict(
             type=dataset_type,
@@ -242,6 +248,7 @@ datasets = dict(
     )
 )
 
+train.output_dir = 'outputs'
 solver.optimizer=dict(
     type='AdamW',
     lr=2.e-4,
@@ -262,6 +269,7 @@ solver.optimizer=dict(
     # ) 
 )
 
+solver.max_iter = 140650
 solver.lr_scheduler=dict(
     type='OneCycleLR',
     div_factor=10,                                  # starts at lr / 10
@@ -276,7 +284,7 @@ solver.momentum=dict(
     cyclic_times=1,
     step_ratio_up=0.4
 )
-solver.max_iter = 140650
 
-dataloader.batch_size=4
-dataloader.num_workers=0
+
+# dataloader.batch_size=4
+# dataloader.num_workers=0

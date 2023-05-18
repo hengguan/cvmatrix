@@ -6,7 +6,7 @@ from numba import errors
 
 import torch
 
-from cvmatrix.structures.bbox import box_np_ops
+from cvmatrix.structures import box_np_ops
 
 warnings.filterwarnings("ignore", category=errors.NumbaPerformanceWarning)
 

@@ -39,7 +39,7 @@ def get_version():
 
 def get_extensions():
     this_dir = path.dirname(path.abspath(__file__))
-    extensions_dir = path.join(this_dir, "cvmatrix", "layers", "csrc")
+    extensions_dir = path.join(this_dir, "cvmatrix", "ops", "csrc")
 
     main_source = path.join(extensions_dir, "vision.cpp")
     sources = glob.glob(path.join(extensions_dir, "**", "*.cpp"))
@@ -101,6 +101,39 @@ def get_extensions():
     ]
 
     return ext_modules
+
+
+def make_cuda_ext(
+    name, module, sources, sources_cuda=[], extra_args=[], extra_include_path=[]
+):
+
+    define_macros = []
+    extra_compile_args = {"cxx": [] + extra_args}
+
+    if torch.cuda.is_available() or os.getenv("FORCE_CUDA", "0") == "1":
+        define_macros += [("WITH_CUDA", None)]
+        extension = CUDAExtension
+        extra_compile_args["nvcc"] = extra_args + [
+            "-D__CUDA_NO_HALF_OPERATORS__",
+            "-D__CUDA_NO_HALF_CONVERSIONS__",
+            "-D__CUDA_NO_HALF2_OPERATORS__",
+            "-gencode=arch=compute_70,code=sm_70",
+            "-gencode=arch=compute_75,code=sm_75",
+            "-gencode=arch=compute_80,code=sm_80",
+            "-gencode=arch=compute_86,code=sm_86",
+        ]
+        sources += sources_cuda
+    else:
+        print("Compiling {} without CUDA".format(name))
+        extension = CppExtension
+
+    return extension(
+        name="{}.{}".format(module, name),
+        sources=[os.path.join(*module.split("."), p) for p in sources],
+        include_dirs=extra_include_path,
+        define_macros=define_macros,
+        extra_compile_args=extra_compile_args,
+    )
 
 
 def get_model_zoo_configs() -> List[str]:
@@ -209,6 +242,15 @@ setup(
             "black==22.3.0",
         ],
     },
-    ext_modules=[], # get_extensions(),
+    ext_modules=[
+        make_cuda_ext(
+            name="bev_pool_ext",
+            module="cvmatrix.layers.bev_pool",
+            sources=[
+                "src/bev_pool.cpp",
+                "src/bev_pool_cuda.cu",
+            ],
+        ),
+    ], # get_extensions(),
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
 )

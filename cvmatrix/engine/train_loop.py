@@ -277,11 +277,15 @@ class SimpleTrainer(TrainerBase):
         If you want to do something with the losses, you can wrap the model.
         """
         self.device = torch.device('cuda')
-        for k, v in data.items():
-            if isinstance(v, list):
-                v =  torch.as_tensor(v)
-            data[k] = v.to(self.device)
-        loss_dict = self.model(data)
+        def to_device(data):
+            for k, v in data.items():
+                if isinstance(v, dict):
+                    data[k] = to_device(v)
+                if isinstance(v, torch.Tensor):
+                    data[k] = v.to(self.device)
+            return data
+        data = to_device(data)
+        loss_dict = self.model(**data)
         if isinstance(loss_dict, torch.Tensor):
             losses = loss_dict
             loss_dict = {"total_loss": loss_dict}

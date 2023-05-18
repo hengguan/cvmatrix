@@ -4,7 +4,7 @@ import torch
 from mmcv.runner import force_fp32
 from torch import nn
 
-# from cvmatrix.ops import bev_pool
+from cvmatrix.layers.bev_pool import bev_pool
 
 __all__ = ["BaseTransform", "BaseDepthTransform"]
 
@@ -175,6 +175,7 @@ class BaseTransform(nn.Module):
         camera2lidar,
         img_aug_matrix,
         lidar_aug_matrix,
+        metas,
         **kwargs,
     ):
         rots = camera2ego[..., :3, :3]

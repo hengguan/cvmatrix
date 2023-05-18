@@ -5,7 +5,7 @@ from .loss import *
 # from .detector import build_detector
 from .neck import *
 from .transformer import *
-from .geometry import *
+# from .geometry import *
 from .build import build_model
 
 

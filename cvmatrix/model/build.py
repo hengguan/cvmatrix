@@ -128,7 +128,7 @@ def build_bev_model(cfg):
 
 
 def build_model(cfg):
-    assert 'model_type' in cfg.model.keys(), f'key "model_type" not be certain.'
+    assert 'model_type' in cfg.model.keys(), f'key "model_type" not be implemented.'
     model_type = cfg.model.model_type
     assert model_type in MODEL_TYPES, f'MODEL TYPE: {model_type} \
         not in the MODEL TYPES ZOO: {MODEL_TYPES}'

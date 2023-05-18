@@ -4,7 +4,7 @@ import os
 import mmcv
 import numpy as np
 
-from cvmatrix.structures.bbox import box_np_ops
+from cvmatrix.structures import box_np_ops
 # from mmdet.datasets import PIPELINES
 from ..build import build_pipeline
 

@@ -8,7 +8,8 @@ from nuscenes.map_expansion.map_api import locations as LOCATIONS
 from PIL import Image
 
 
-from cvmatrix.structures.points import BasePoints, get_points_type
+from cvmatrix.structures.base_points import BasePoints
+# from cvmatrix.structures.utils import get_points_type
 from ..build import PIPELINES_REGISTRY
 
 from .loading_utils import load_augmented_point_cloud, reduce_LiDAR_beams

@@ -10,7 +10,7 @@ from nuscenes.utils.data_classes import Box as NuScenesBox
 from pyquaternion import Quaternion
 
 from ..build import DATASETS_REGISTRY
-from cvmatrix.structures.bbox import LiDARInstance3DBoxes
+from cvmatrix.structures import LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
 
 
@@ -252,7 +252,7 @@ class NuScenesDataset(Custom3DDataset):
 
                 # camera intrinsics
                 camera_intrinsics = np.eye(4).astype(np.float32)
-                camera_intrinsics[:3, :3] = camera_info["cam_intrinsic"]
+                camera_intrinsics[:3, :3] = camera_info["camera_intrinsics"]
                 data["camera_intrinsics"].append(camera_intrinsics)
 
                 # lidar to image transform

@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 
 from ..build import DATASETS_REGISTRY
 
-from cvmatrix.structures.bbox import get_box_type
+from cvmatrix.structures.utils import get_box_type
 from ..pipelines.compose import Compose
 
 

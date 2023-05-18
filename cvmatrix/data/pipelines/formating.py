@@ -2,8 +2,8 @@
 import numpy as np
 from mmcv.parallel import DataContainer as DC
 
-from cvmatrix.structures.bbox import BaseInstance3DBoxes
-from cvmatrix.structures.points import BasePoints
+from cvmatrix.structures.lidar_box3d import BaseInstance3DBoxes
+from cvmatrix.structures.base_points import BasePoints
 from ..build import PIPELINES_REGISTRY
 from .utils import to_tensor
 

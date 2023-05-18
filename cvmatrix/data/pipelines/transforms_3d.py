@@ -9,13 +9,13 @@ from mmcv.utils import build_from_cfg
 from numpy import random
 from PIL import Image
 
-from cvmatrix.structures.voxel_generator import VoxelGenerator
-from cvmatrix.structures.bbox import (
-    CameraInstance3DBoxes,
-    DepthInstance3DBoxes,
-    LiDARInstance3DBoxes,
-    box_np_ops,
+# from cvmatrix.structures.voxel_generator import VoxelGenerator
+from cvmatrix.structures.lidar_box3d import (
+    # CameraInstance3DBoxes,
+    # DepthInstance3DBoxes,
+    LiDARInstance3DBoxes
 )
+from cvmatrix.structures import box_np_ops
 
 from ..build import PIPELINES_REGISTRY
 # from ..builder import OBJECTSAMPLERS
@@ -472,7 +472,7 @@ class ObjectRangeFilter:
         """
         # Check points instance type and initialise bev_range
         if isinstance(
-            data["gt_bboxes_3d"], (LiDARInstance3DBoxes, DepthInstance3DBoxes)
+            data["gt_bboxes_3d"], (LiDARInstance3DBoxes, )
         ):
             bev_range = self.pcd_range[[0, 1, 3, 4]]
         elif isinstance(data["gt_bboxes_3d"], CameraInstance3DBoxes):

@@ -50,7 +50,7 @@ def main(args):
     if cfg.train.uuid is None or cfg.train.uuid == "":
         cfg.train.uuid = time.strftime("%Y%m%d-%H%M%S")
 
-    # cfg = LazyConfig.apply_overrides(cfg, args.opts)
+    cfg = LazyConfig.apply_overrides(cfg, args.opts)
     cfg.train.output_dir = osp.join(
         cfg.train.output_dir, project_name, cfg.train.uuid
     )

@@ -1,10 +1,8 @@
 import torch
 
-from .base_bbox_coders import BaseBBoxCoder
-from ..build import BOX_CODER_REGISTRY
+from .base_bbox_coder import BaseBBoxCoder
 
 
-@BOX_CODER_REGISTRY.register()
 class CenterPointBBoxCoder(BaseBBoxCoder):
     """Bbox coder for CenterPoint.
 
