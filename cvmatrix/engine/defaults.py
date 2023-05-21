@@ -549,7 +549,7 @@ class DefaultTrainer(TrainerBase):
         return build_dataloader(cfg.train_loader)
 
     @classmethod
-    def build_test_loader(cls, cfg, dataset_name):
+    def build_test_loader(cls, cfg):
         """
         Returns:
             iterable
@@ -561,7 +561,7 @@ class DefaultTrainer(TrainerBase):
         return build_dataloader(cfg.val_loader)
 
     @classmethod
-    def build_evaluator(cls, cfg, dataset_name):
+    def build_evaluator(cls, cfg):
         """
         Returns:
             DatasetEvaluator or None
@@ -601,35 +601,37 @@ Alternatively, you can call evaluation functions yourself (see Colab balloon tut
             )
 
         results = OrderedDict()
-        for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
-            data_loader = cls.build_test_loader(cfg, dataset_name)
-            # When evaluators are passed in as arguments,
-            # implicitly assume that evaluators can be created before data_loader.
-            if evaluators is not None:
-                evaluator = evaluators[idx]
-            else:
-                try:
-                    evaluator = cls.build_evaluator(cfg, dataset_name)
-                except NotImplementedError:
-                    logger.warn(
-                        "No evaluator found. Use `DefaultTrainer.test(evaluators=)`, "
-                        "or implement its `build_evaluator` method."
-                    )
-                    results[dataset_name] = {}
-                    continue
-            results_i = inference_on_dataset(model, data_loader, evaluator)
-            results[dataset_name] = results_i
-            if comm.is_main_process():
-                assert isinstance(
-                    results_i, dict
-                ), "Evaluator must return a dict on the main process. Got {} instead.".format(
-                    results_i
+        # TODO: mult-dataset evaluation
+        # for idx, dataset_name in enumerate(cfg.DATASETS.TEST):
+        data_loader = cls.build_test_loader(cfg)
+        # When evaluators are passed in as arguments,
+        # implicitly assume that evaluators can be created before data_loader.
+        if evaluators is not None:
+            evaluator = evaluators[idx]
+        else:
+            try:
+                evaluator = cls.build_evaluator(cfg)
+            except NotImplementedError:
+                logger.warn(
+                    "No evaluator found. Use `DefaultTrainer.test(evaluators=)`, "
+                    "or implement its `build_evaluator` method."
                 )
-                logger.info("Evaluation results for {} in csv format:".format(dataset_name))
-                print_csv_format(results_i)
+                # results[dataset_name] = {}
+                # continue
+                return {}
+        results = inference_on_dataset(model, data_loader, evaluator)
+        # results[dataset_name] = results_i
+        if comm.is_main_process():
+            assert isinstance(
+                results, dict
+            ), "Evaluator must return a dict on the main process. Got {} instead.".format(
+                results_i
+            )
+            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+            print_csv_format(results)
 
-        if len(results) == 1:
-            results = list(results.values())[0]
+        # if len(results) == 1:
+        #     results = list(results.values())[0]
         return results
 
     @staticmethod

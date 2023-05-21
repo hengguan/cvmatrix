@@ -40,8 +40,8 @@ class Trainer(DefaultTrainer):
     """
 
     @classmethod
-    def build_evaluator(cls, cfg, dataset_name, output_folder=None):
-        return build_evaluator(cfg, dataset_name, output_folder)
+    def build_evaluator(cls, cfg, output_folder=None):
+        return build_evaluator(cfg.evaluation)
 
 
 def main(args):
@@ -59,8 +59,8 @@ def main(args):
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
-        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-            cfg.MODEL.WEIGHTS, resume=args.resume
+        DetectionCheckpointer(model, save_dir=cfg.train.output_dir).resume_or_load(
+            cfg.train.init_checkpoint, resume=args.resume
         )
         res = Trainer.test(cfg, model)
         # if cfg.TEST.AUG.ENABLED:

@@ -218,7 +218,60 @@ train_pipelines=[
                 "camera2lidar", "lidar2image", "img_aug_matrix", "lidar_aug_matrix"]
     )
 ]
-
+test_pipelines=[
+    dict(type="LoadMultiViewImageFromFiles", to_float32=True),
+    # dict(type="LoadPointsFromFile",
+    #     coord_type="LIDAR",
+    #     load_dim=load_dim,
+    #     use_dim=use_dim,
+    #     reduce_beams=reduce_beams,
+    #     load_augmented=load_augmented),
+    # dict(type="LoadPointsFromMultiSweeps",
+    #     sweeps_num=9,
+    #     load_dim=load_dim,
+    #     use_dim=use_dim,
+    #     reduce_beams=reduce_beams,
+    #     pad_empty_sweeps=True,
+    #     remove_close=True,
+    #     load_augmented=load_augmented,),
+    dict(
+        type="LoadAnnotations3D",
+        with_bbox_3d=True,
+        with_label_3d=True,
+        with_attr_label=False
+    ),
+    dict(
+        type="ImageAug3D",
+        final_dim=image_size,
+        resize_lim=augment2d['resize'][1],
+        bot_pct_lim=[0.0, 0.0],
+        rot_lim=[0., 0.],
+        rand_flip=False,
+        is_train=False
+    ),
+    dict(
+        type="GlobalRotScaleTrans",
+        resize_lim=[1., 1.],
+        rot_lim=[0., 0.],
+        trans_lim=0.,
+        is_train=False
+    ),
+    # dict(
+    #     type="LoadBEVSegmentation",
+    #     dataset_root=dataset_root,
+    #     xbound=[-50.0, 50.0, 0.5],
+    #     ybound=[-50.0, 50.0, 0.5],
+    #     classes=map_classes,
+    # ),
+    # dict(type="PointsRangeFilter",  point_cloud_range=point_cloud_range,),
+    dict(type="ImageNormalize", mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    dict(type="DefaultFormatBundle3D", classes=object_classes,),
+    dict(type="Collect3D", 
+        keys=["img", "gt_bboxes_3d", "gt_labels_3d"],#, "gt_masks_bev"
+        meta_keys=["camera_intrinsics", "camera2ego", "lidar2ego", "ego2global", "lidar2camera", 
+                "camera2lidar", "lidar2image", "img_aug_matrix", "lidar_aug_matrix"]
+    )
+]
 # datasets = dict(
 #     train=dict(
         
@@ -248,6 +301,27 @@ train_loader=dict(
     )
 )
 
+val_loader=dict(
+    batch_size=1,
+    num_workers=1,
+    # pin_memory=True,
+    # prefetch_factor=4,
+    shuffle=False,
+    dataset=dict(
+        type=dataset_type,
+        dataset_root=dataset_root,
+        ann_file=dataset_root+"nuscenes_infos_val.pkl",
+        pipeline=test_pipelines,
+        object_classes=None,
+        load_interval=1,
+        map_classes=map_classes,
+        modality=input_modality,
+        test_mode=True,
+        box_type_3d="LiDAR"
+    )
+)
+
+train.uuid = '20230518-193552'
 train.output_dir = 'outputs'
 solver.optimizer=dict(
     type='AdamW',
@@ -286,5 +360,15 @@ solver.momentum=dict(
 )
 
 
-# dataloader.batch_size=4
-# dataloader.num_workers=0
+evaluation=dict(
+    type='NuscDetEval',
+    jsonfile_prefix='outputs/bevfusion_swint_lssfpn_centerhead_256x704_camonly_det_24e/20230518-193552/test',
+    eval_modes=['boxes_3d'],  # boxes_3d/masks_bev
+    eval_version="detection_cvpr_2019",
+    modality=input_modality,
+    nusc_config=dict(
+        version='v1.0-trainval',
+        dataroot=dataset_root,
+        verbose=False
+    )
+)

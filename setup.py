@@ -251,6 +251,14 @@ setup(
                 "src/bev_pool_cuda.cu",
             ],
         ),
+        make_cuda_ext(
+                name="iou3d_cuda",
+                module="cvmatrix.layers.iou3d",
+                sources=[
+                    "src/iou3d.cpp",
+                    "src/iou3d_kernel.cu",
+                ],
+            ),
     ], # get_extensions(),
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
 )

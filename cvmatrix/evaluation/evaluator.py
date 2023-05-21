@@ -160,8 +160,17 @@ def inference_on_dataset(
                 total_compute_time = 0
                 total_eval_time = 0
 
+            device = torch.device('cuda')
+            def to_device(data):
+                for k, v in data.items():
+                    if isinstance(v, dict):
+                        data[k] = to_device(v)
+                    if isinstance(v, torch.Tensor):
+                        data[k] = v.to(device)
+                return data
+            inputs = to_device(inputs)
             start_compute_time = time.perf_counter()
-            outputs = model(inputs)
+            outputs = model(**inputs)
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             total_compute_time += time.perf_counter() - start_compute_time

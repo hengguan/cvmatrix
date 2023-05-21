@@ -285,7 +285,7 @@ class SimpleTrainer(TrainerBase):
                     data[k] = v.to(self.device)
             return data
         data = to_device(data)
-        loss_dict = self.model(**data)
+        loss_dict = self.model(data)
         if isinstance(loss_dict, torch.Tensor):
             losses = loss_dict
             loss_dict = {"total_loss": loss_dict}
