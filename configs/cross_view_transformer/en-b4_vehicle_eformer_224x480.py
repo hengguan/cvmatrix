@@ -3,9 +3,11 @@ from ..common.dataset.nuscenes import datasets
 from ..common.dataloader import dataloader
 from ..common.train import train, test
 
-image_height_ = 224
-image_width_ = 480
-top_crop_ = 46
+image_=dict(
+    h=224,
+    w=480,
+    top_crop=46
+)
 dim_ = 128
 bev_ = dict(
     bev_height=200,
@@ -14,7 +16,7 @@ bev_ = dict(
     w_meters=100.0,
     offset=0.0
 )
-blocks_ = [128, 128, 64]
+blocks_ = [128, 64]
 label_indices_ = [[4, 5, 6, 7, 8, 10, 11]]
 
 
@@ -26,7 +28,7 @@ model = dict(
         bev=[0, 1],
         center=[1, 2]
     ),
-    input_size=[image_height_, image_width_],
+    input_size=["${image_.h}", "${image_.w}"],
     backbone=dict(
         type="EfficientNetExtractor",
         model_name="efficientnet-b4",
@@ -43,8 +45,8 @@ model = dict(
             qkv_bias=True,
             skip=True,
             no_image_features=False,
-            image_height=image_height_,
-            image_width=image_width_,
+            image_height="${image_.h}",
+            image_width="${image_.w}",
         ),
         bev_embedding=dict(
             sigma=1.0,
@@ -78,7 +80,7 @@ model = dict(
     )
 )
 
-train.uuid = ""
+train.uuid = "20230520-133022"
 train.output_dir = "./outputs"
 
 # solver config
@@ -98,26 +100,35 @@ solver.lr_scheduler = dict(
     cycle_momentum=False,
 )
 
-datasets.train.update(dict(
-    data_dir="/home/gh/workspace/data/nuscenes/trainval/",
-    normalize=dict(
-        norm_resnet=False,
-        mean=[0.485, 0.456, 0.406],     
-        std=[0.229, 0.224, 0.225],
-        to_rgb=False
-    ),
-    labels_root="/home/gh/workspace/data/nuscenes/cvt_labels",
-    labels_dir_name="cvt_labels_nuscenes_v2",
-    image=dict(
-        h=image_height_,
-        w=image_width_,
-        top_crop=top_crop_
-    ),
-    augment='none'
-))
-
-dataloader.batch_size=8
-dataloader.num_workers=6
+data_type_ = "NuscenesGenerated"
+data_dir_="/home/gh/workspace/data/nuscenes/trainval/"
+labels_root_="/home/gh/workspace/data/nuscenes/cvt_labels"
+labels_dir_name_="cvt_labels_nuscenes_v2"
+normalize_=dict(
+    norm_resnet=False,
+    mean=[0.485, 0.456, 0.406],     
+    std=[0.229, 0.224, 0.225],
+    to_rgb=False
+)
+train_loader = dict(
+    batch_size=8,
+    num_workers=6,
+    pin_memory=True,
+    prefetch_factor=4,
+    shuffle=True,
+    dataset=dict(
+        type=data_type_,
+        version='',
+        normalize=normalize_,
+        split='train',
+        data_dir= data_dir_,
+        labels_root  = labels_root_,
+        labels_dir_name  = labels_dir_name_,
+        image = image_,
+        cameras=None,
+        augment='none',
+    )
+)
 
 evaluator = dict(
     iou=dict(

@@ -41,7 +41,7 @@ python scripts/demo.py \
 
 def build_dataloader(cfg, split='val', subsample=5, is_val4d=False):
     datasets = []
-    data_cfg = cfg.datasets.train.copy()
+    data_cfg = cfg.train_loader.dataset.copy()
     assert 'type' in data_cfg.keys(), f'"type" not be assigned.'
     dataset_name = data_cfg.pop("type")
     data_cfg.split = 'val'

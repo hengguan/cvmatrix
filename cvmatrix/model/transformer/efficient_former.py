@@ -8,6 +8,7 @@ from typing import List
 from omegaconf.listconfig import ListConfig
 
 from ..build import TRANSFORMER_REGISTRY
+import cv2
 
 
 __all__ = ['EfficientFormer']
@@ -112,7 +113,7 @@ class BEVEmbedding(nn.Module):
 
         # egocentric frame
         self.register_buffer('grid', grid, persistent=False)                    # 3 h w
-        self.learned_features = nn.Parameter(sigma * torch.randn(dim, h, w))    # d h w
+        self.learned_features = nn.Parameter(sigma * torch.randn(6, dim, h//2, w))    # d h w
 
     def get_prior(self):
         return self.learned_features
@@ -147,7 +148,7 @@ class CrossAttention(nn.Module):
         # Move feature dim to last for multi-head proj
         q = rearrange(q, 'b n d H W -> b n (H W) d')
         k = rearrange(k, 'b n d h w -> b n (h w) d')
-        v = rearrange(v, 'b n d h w -> b (n h w) d')
+        v = rearrange(v, 'b n d h w -> b n (h w) d')
 
         # Project with multiple heads
         q = self.to_q(q)                                # b (n H W) (heads dim_head)
@@ -161,11 +162,11 @@ class CrossAttention(nn.Module):
 
         # Dot product attention along cameras
         dot = self.scale * torch.einsum('b n Q d, b n K d -> b n Q K', q, k)
-        dot = rearrange(dot, 'b n Q K -> b Q (n K)')
+        # dot = rearrange(dot, 'b n Q K -> b Q (n K)')
         att = dot.softmax(dim=-1)
 
         # Combine values (image level features).
-        a = torch.einsum('b Q K, b K d -> b Q d', att, v)
+        a = torch.einsum('b n Q K, b n K d -> b n Q d', att, v)
         a = rearrange(a, '(b m) ... d -> b ... (m d)', m=self.heads, d=self.dim_head)
 
         # Combine multiple heads
@@ -173,12 +174,12 @@ class CrossAttention(nn.Module):
 
         # Optional skip connection
         if skip is not None:
-            z = z + rearrange(skip, 'b d H W -> b (H W) d')
+            z = z + rearrange(skip, 'b n d H W -> b n (H W) d')
 
         z = self.prenorm(z)
         z = z + self.mlp(z)
         z = self.postnorm(z)
-        z = rearrange(z, 'b (H W) d -> b d H W', H=H, W=W)
+        z = rearrange(z, 'b n (H W) d -> b n d H W', H=H, W=W)
 
         return z
 
@@ -205,17 +206,7 @@ class CrossViewAttention(nn.Module):
         image_plane[:, :, 0] *= image_width
         image_plane[:, :, 1] *= image_height
 
-        self.bh, self.bw = 100, 100
-        self.gh, self.gw = 50, 50
-        bev_grid = generate_grid(self.gh, self.gw)[0]
-        bev_grid[0] = bev_grid[0] * self.bw - self.bw // 2
-        bev_grid[1] = bev_grid[1] * self.bh - self.bh // 2
-
-        # pts = []
-        # for i in range(25):
-
         self.register_buffer('image_plane', image_plane, persistent=False)
-        self.register_buffer('bev_grid', bev_grid, persistent=False)
 
         self.feature_linear = nn.Sequential(
             nn.BatchNorm2d(feat_dim),
@@ -233,9 +224,11 @@ class CrossViewAttention(nn.Module):
         self.bev_embed = nn.Conv2d(2, dim, 1)
         self.img_embed = nn.Conv2d(4, dim, 1, bias=False)
         # self.world_embed = nn.Conv2d(2, dim//2, 1)
+        self.layer = nn.Sequential(*[ResNetBottleNeck(dim) for _ in range(2)])
 
         self.cross_attend = CrossAttention(dim, heads, dim_head, qkv_bias)
         self.skip = skip
+        self.count = 0
 
     def forward(
         self,
@@ -270,29 +263,31 @@ class CrossViewAttention(nn.Module):
         d = E_inv @ cam                                                         # b n 4 (h w)
         d_flat = rearrange(d, 'b n d (h w) -> (b n) d h w', h=h, w=w)           # (b n) 4 h w
         rays = d_flat - c_flat           # (b n) 4 h w
-        # rays = rays / (rays.norm(dim=1, keepdim=True) + 1e-7)    # (b n) 4 h w
+        rays = rays / (rays.norm(dim=1, keepdim=True) + 1e-7)    # (b n) 4 h w
 
-        rads = torch.atan2(rays[:, 1, :, :], rays[:, 0, :, :])  # (b n) h w
+        #compute angle range
+        rads = torch.atan2(rays[:, 1, :, :], rays[:, 0, :, :])                # (b n) h w
         mid_rad = rads[:, h//2, w//2]
-        cm = torch.cos(mid_rad)
-        sm = torch.sin(mid_rad)
-        row1 = torch.stack([cm, sm, torch.zeros_like(cm)], axis=1)
-        row2 = torch.stack([-sm, cm, torch.zeros_like(cm)], axis=1)
-        rot_mat = torch.stack([row1, row2, c_flat[:, [0, 1, 3], 0, 0]], axis=2)  # (b n) 3 3
-        # rot_mat[:, 2, 2] = 1
-        print(rot_mat)
+        sin_mr = torch.sin(mid_rad)
+        cos_mr = torch.cos(mid_rad)
+        col1 = torch.stack([cos_mr, sin_mr, torch.zeros_like(cos_mr)], axis=1)
+        col2 = torch.stack([-sin_mr, cos_mr, torch.zeros_like(cos_mr)], axis=1)
+        col3 = torch.cat([c_flat[:, :2, 0, 0] / 2., torch.zeros_like(cos_mr)[:, None]], axis=1)
+        rot_mat = torch.stack([col1, col2, col3], axis=2)
+        rot_mat[:, 2, 2] = 1
 
         # rays = rays + c_flat
         img_embed = self.img_embed(rays)
         # d_embed = self.img_embed(d_flat)                                        # (b n) d h w
 
-        # Camera-aware positional encoding
-        # img_embed = d_embed - c_embed                                           # (b n) d h w
-        # img_embed = img_embed / (img_embed.norm(dim=1, keepdim=True) + 1e-7)    # (b n) d h w
-
         world = bev.grid[:2]                                                    # 2 H W
+        bh, bw = world.shape[1:]
+        rot_world = rot_mat[:, :2, :2] @ rearrange(world, 'd H W -> d (H W)')        # bn 2 (H W)
+        bevs = rearrange(rot_world, 'bn d (H W) -> bn d H W', H=bh, W=bw)[:, :2,  :bh//2, :]
+
         # world = F.pad(world[None], (0, 0, 0, 0, 0, 1, 0, 0), value=1)       # 1 3 H W
-        bevs = world[None] - c_flat[:, [0, 1], :, :]                            # (b n) 3 H W
+        # bevs = world[None] - c_flat[:, [0, 1], :, :]                            # (b n) 3 H W
+        # bevs = repeat(world[:, :bh//2, :], '... -> bn ...', bn=b*n)
         bevs = bevs / (bevs.norm(dim=1, keepdim=True) + 1e-7)    # (b n) 2 H W
 
         bev_embed = self.bev_embed(bevs)                                  # b d/2 H W
@@ -313,11 +308,32 @@ class CrossViewAttention(nn.Module):
         val_flat = self.feature_linear(feature_flat)                            # (b n) d h w
 
         # Expand + refine the BEV embedding
-        query = query_pos + x[:, None]                                          # b n d H W
+        query = query_pos + x                                          # b n d H W
         key = rearrange(key_flat, '(b n) ... -> b n ...', b=b, n=n)             # b n d h w
         val = rearrange(val_flat, '(b n) ... -> b n ...', b=b, n=n)             # b n d h w
+        y = self.cross_attend(query, key, val, skip=x if self.skip else None)   # b n d H W
+        y = rearrange(y, 'b n ... -> (b n) ...')
+        y = self.layer(y)
 
-        return self.cross_attend(query, key, val, skip=x if self.skip else None)
+        dim = y.shape[1]
+        tmp_bev = torch.zeros((b*n, dim, bh, bw), dtype=y.dtype, device=y.device)
+        tmp_bev[:, :, :bh//2, :] = y
+        # tmp_bev = rearrange(tmp_bev, 'b n ... -> (b n) ...')
+
+        rot_mat[:, :2, 2] /= bh
+        bev_grid = F.affine_grid(rot_mat[:, :2, :], tmp_bev.shape)
+        bev = F.grid_sample(tmp_bev, bev_grid, mode='bilinear')
+        bev = rearrange(bev, '(b n) ... -> b n ...', b=b, n=n)
+        # bevs_ = bev[0].sum(dim=1)
+        # idx = 0
+        # for f in bevs_:
+        #     f_im = norm_feat(f.cpu().numpy())
+        #     cv2.imwrite(f'feat_{self.count:02}_{idx}.jpg', f_im)
+        #     idx += 1 
+        # f_im = norm_feat(bev.sum(axis=1)[0].sum(axis=0).cpu().numpy())
+        # cv2.imwrite(f'bev_{self.count:02}.jpg', f_im)
+        # self.count += 1
+        return bev.sum(axis=1), rearrange(y, '(b n) ... -> b n ...', b=b, n=n)
 
 
 @TRANSFORMER_REGISTRY.register()
@@ -353,35 +369,55 @@ class EfficientFormer(nn.Module):
 
             if isinstance(feat_shape, ListConfig):
                 feat_shape = tuple(feat_shape)
-                
+
             _, feat_dim, feat_height, feat_width = self.down(torch.zeros(feat_shape)).shape
 
             cva = CrossViewAttention(feat_height, feat_width, feat_dim, dim, **cross_view)
             cross_views.append(cva)
 
-            layer = nn.Sequential(*[ResNetBottleNeck(dim) for _ in range(num_layers)])
-            layers.append(layer)
+            # layer = nn.Sequential(*[ResNetBottleNeck(dim) for _ in range(num_layers)])
+            # layers.append(layer)
 
         self.bev_embedding = BEVEmbedding(dim, **bev_embedding)
         self.cross_views = nn.ModuleList(cross_views)
-        self.layers = nn.ModuleList(layers)
+        # self.layers = nn.ModuleList(layers)
+        self.count = 0
 
     def forward(self, feats, camera):
         
         I_inv = camera['intrinsics'].inverse()           # b n 3 3
-        E_inv = camera['extrinsics'].inverse()           # b n 4 4
+        E_inv = camera['extrinsics'].inverse()           # b n 4 4, camera to egolidar
 
         features = [self.down(y) for y in feats]
         b = features[0].shape[0] // 6
         n = 6
 
         x = self.bev_embedding.get_prior()              # d H W
-        x = repeat(x, '... -> b ...', b=b)              # b d H W
-
-        for cross_view, feature, layer in zip(self.cross_views, features, self.layers):
+        x = repeat(x, '... -> b ...', b=b)              # b n d H W
+        # idx = 0
+        # bev = torch.zeros((b, x.shape[2], 50, 50), dtype=x.dtype, device=x.device)
+        for cross_view, feature in zip(self.cross_views, features):#, self.layers):
             feature = rearrange(feature, '(b n) ... -> b n ...', b=b, n=n)
+            # f = x.sum(dim=1)[0].cpu().numpy()
+            # f_im = norm_feat(f)
+            # cv2.imwrite(f'init_{self.count:02}_{idx}.jpg', f_im)
+            bev, x = cross_view(x, self.bev_embedding, feature, I_inv, E_inv)
+            # f = x.sum(dim=1)[0].cpu().numpy()
+            # f_im = norm_feat(f)
+            # cv2.imwrite(f'before_{self.count:02}_{idx}.jpg', f_im)
+            # bev = layer(bev_) + bev
+        #     f = x.sum(dim=1)[0].cpu().numpy()
+        #     f_im = norm_feat(f)
+        #     cv2.imwrite(f'after_{self.count:02}_{idx}.jpg', f_im)
+        #     idx += 1
+        # self.count += 1
 
-            x = cross_view(x, self.bev_embedding, feature, I_inv, E_inv)
-            x = layer(x)
+        return bev
 
-        return x
+# import numpy as np
+# def norm_feat(feat):
+#     max_num = np.amax(feat)
+#     min_num = np.amin(feat)
+#     out = (feat - min_num) / (max_num - min_num) * 255
+#     # out = out.round()
+#     return out.astype(np.uint8)
