@@ -222,7 +222,7 @@ class NuscDetEval(DatasetEvaluator):
             verbose=False,
         )
         print(f'Eval start ...')
-        nusc_eval.main(render_curves=False)
+        nusc_eval.main(plot_examples=True, render_curves=False)
 
         # record metrics
         metrics = mmcv.load(osp.join(output_dir, "metrics_summary.json"))

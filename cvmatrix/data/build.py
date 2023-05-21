@@ -38,39 +38,6 @@ from cvmatrix.utils.registry import Registry
 from .common import AspectRatioGroupedDataset, DatasetFromList, MapDataset, ToIterableDataset
 # from .dataset_mapper import DatasetMapper
 # from .detection_utils import check_metadata_consistency
-def collate_fn(data):
-    imgs = torch.stack([d['img'].data for d in data])
-    gt_bboxes_3d = [d['gt_bboxes_3d'].data for d in data]
-    gt_labels_3d = torch.stack([d['gt_labels_3d'].data for d in data])
-    camera_intrinsics = torch.stack([d['camera_intrinsics'].data for d in data])
-    camera2ego = torch.stack([d['camera2ego'].data for d in data])
-    lidar2ego = torch.stack([d['lidar2ego'].data for d in data])
-    ego2global = torch.stack([d['ego2global'].data for d in data])
-    lidar2camera = torch.stack([d['lidar2camera'].data for d in data])
-    camera2lidar = torch.stack([d['camera2lidar'].data for d in data])
-    lidar2image = torch.stack([d['lidar2image'].data for d in data])
-    img_aug_matrix = torch.stack([d['img_aug_matrix'].data for d in data])
-    lidar_aug_matrix = torch.stack([d['lidar_aug_matrix'].data for d in data])
-    metas=[d['metas'].data for d in data]
-    
-    batch = dict(
-        img=imgs,
-        gt_bboxes_3d=gt_bboxes_3d,
-        gt_labels_3d=gt_labels_3d,
-        points=[],
-        camera_intrinsics = camera_intrinsics,
-        camera2ego = camera2ego,
-        lidar2ego = lidar2ego,
-        ego2global=ego2global,
-        lidar2camera = lidar2camera,
-        camera2lidar = camera2lidar,
-        lidar2image = lidar2image,
-        img_aug_matrix = img_aug_matrix,
-        lidar_aug_matrix = lidar_aug_matrix,
-        metas=metas
-    )
-
-    return batch
 
 
 DATASETS_REGISTRY = Registry("DATASETS")
@@ -125,7 +92,7 @@ def build_dataloader(cfg, **kwargs):
     datasets = [build_dataset(_cfg) for _cfg in data_cfg] if isinstance(data_cfg, list) \
         else [build_dataset(data_cfg)]
     dataset = torchdata.ConcatDataset(datasets)
-
+    collate_fn = datasets[0].collate_fn if hasattr(datasets[0], 'collate_fn') else None
     for k, v in cfg.items():
         if isinstance(v, str):
             cfg[k] = eval(v)
@@ -134,7 +101,7 @@ def build_dataloader(cfg, **kwargs):
         cfg['prefetch_factor'] = 2
 
     # TODO: shuffle should be False in non-training step 
-    return torch.utils.data.DataLoader(dataset, **cfg)
+    return torch.utils.data.DataLoader(dataset, collate_fn=collate_fn, **cfg)
 
 
 def build_test_dataloader(cfg, split='val', subsample=5, is_val4d=False):

@@ -100,14 +100,7 @@ class NuScenesDataset(Custom3DDataset):
         "vehicle.parked",
         "vehicle.stopped",
     ]
-    # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
-    ErrNameMapping = {
-        "trans_err": "mATE",
-        "scale_err": "mASE",
-        "orient_err": "mAOE",
-        "vel_err": "mAVE",
-        "attr_err": "mAAE",
-    }
+
     CLASSES = (
         "car",
         "truck",
@@ -327,320 +320,36 @@ class NuScenesDataset(Custom3DDataset):
         )
         return anns_results
 
-    def _format_bbox(self, results, jsonfile_prefix=None):
-        """Convert the results to the standard format.
-
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str): The prefix of the output jsonfile.
-                You can specify the output directory/filename by
-                modifying the jsonfile_prefix. Default: None.
-
-        Returns:
-            str: Path of the output json file.
-        """
-        nusc_annos = {}
-        mapped_class_names = self.CLASSES
-
-        print("Start to convert detection format...")
-        for sample_id, det in enumerate(mmcv.track_iter_progress(results)):
-            annos = []
-            boxes = output_to_nusc_box(det)
-            sample_token = self.data_infos[sample_id]["token"]
-            boxes = lidar_nusc_box_to_global(
-                self.data_infos[sample_id],
-                boxes,
-                mapped_class_names,
-                self.eval_detection_configs,
-                self.eval_version,
-            )
-            for i, box in enumerate(boxes):
-                name = mapped_class_names[box.label]
-                if np.sqrt(box.velocity[0] ** 2 + box.velocity[1] ** 2) > 0.2:
-                    if name in [
-                        "car",
-                        "construction_vehicle",
-                        "bus",
-                        "truck",
-                        "trailer",
-                    ]:
-                        attr = "vehicle.moving"
-                    elif name in ["bicycle", "motorcycle"]:
-                        attr = "cycle.with_rider"
-                    else:
-                        attr = NuScenesDataset.DefaultAttribute[name]
-                else:
-                    if name in ["pedestrian"]:
-                        attr = "pedestrian.standing"
-                    elif name in ["bus"]:
-                        attr = "vehicle.stopped"
-                    else:
-                        attr = NuScenesDataset.DefaultAttribute[name]
-
-                nusc_anno = dict(
-                    sample_token=sample_token,
-                    translation=box.center.tolist(),
-                    size=box.wlh.tolist(),
-                    rotation=box.orientation.elements.tolist(),
-                    velocity=box.velocity[:2].tolist(),
-                    detection_name=name,
-                    detection_score=box.score,
-                    attribute_name=attr,
-                )
-                annos.append(nusc_anno)
-            nusc_annos[sample_token] = annos
-        nusc_submissions = {
-            "meta": self.modality,
-            "results": nusc_annos,
-        }
-
-        mmcv.mkdir_or_exist(jsonfile_prefix)
-        res_path = osp.join(jsonfile_prefix, "results_nusc.json")
-        print("Results writes to", res_path)
-        mmcv.dump(nusc_submissions, res_path)
-        return res_path
-
-    def _evaluate_single(
-        self,
-        result_path,
-        logger=None,
-        metric="bbox",
-        result_name="pts_bbox",
-    ):
-        """Evaluation for a single model in nuScenes protocol.
-
-        Args:
-            result_path (str): Path of the result file.
-            logger (logging.Logger | str | None): Logger used for printing
-                related information during evaluation. Default: None.
-            metric (str): Metric name used for evaluation. Default: 'bbox'.
-            result_name (str): Result name in the metric prefix.
-                Default: 'pts_bbox'.
-
-        Returns:
-            dict: Dictionary of evaluation details.
-        """
-        from nuscenes import NuScenes
-        from nuscenes.eval.detection.evaluate import DetectionEval
-
-        output_dir = osp.join(*osp.split(result_path)[:-1])
-        nusc = NuScenes(version=self.version, dataroot=self.dataset_root, verbose=False)
-        eval_set_map = {
-            "v1.0-mini": "mini_val",
-            "v1.0-trainval": "val",
-        }
-        nusc_eval = DetectionEval(
-            nusc,
-            config=self.eval_detection_configs,
-            result_path=result_path,
-            eval_set=eval_set_map[self.version],
-            output_dir=output_dir,
-            verbose=False,
-        )
-        nusc_eval.main(render_curves=False)
-
-        # record metrics
-        metrics = mmcv.load(osp.join(output_dir, "metrics_summary.json"))
-        detail = dict()
-        for name in self.CLASSES:
-            for k, v in metrics["label_aps"][name].items():
-                val = float("{:.4f}".format(v))
-                detail["object/{}_ap_dist_{}".format(name, k)] = val
-            for k, v in metrics["label_tp_errors"][name].items():
-                val = float("{:.4f}".format(v))
-                detail["object/{}_{}".format(name, k)] = val
-            for k, v in metrics["tp_errors"].items():
-                val = float("{:.4f}".format(v))
-                detail["object/{}".format(self.ErrNameMapping[k])] = val
-
-        detail["object/nds"] = metrics["nd_score"]
-        detail["object/map"] = metrics["mean_ap"]
-        return detail
-
-    def format_results(self, results, jsonfile_prefix=None):
-        """Format the results to json (standard format for COCO evaluation).
-
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-
-        Returns:
-            tuple: Returns (result_files, tmp_dir), where `result_files` is a \
-                dict containing the json filepaths, `tmp_dir` is the temporal \
-                directory created for saving json files when \
-                `jsonfile_prefix` is not specified.
-        """
-        assert isinstance(results, list), "results must be a list"
-        assert len(results) == len(
-            self
-        ), "The length of results is not equal to the dataset len: {} != {}".format(
-            len(results), len(self)
+    def collate_fn(self, data):
+        imgs = torch.stack([d['img'].data for d in data])
+        gt_bboxes_3d = [d['gt_bboxes_3d'].data for d in data]
+        gt_labels_3d = torch.stack([d['gt_labels_3d'].data for d in data])
+        camera_intrinsics = torch.stack([d['camera_intrinsics'].data for d in data])
+        camera2ego = torch.stack([d['camera2ego'].data for d in data])
+        lidar2ego = torch.stack([d['lidar2ego'].data for d in data])
+        ego2global = torch.stack([d['ego2global'].data for d in data])
+        lidar2camera = torch.stack([d['lidar2camera'].data for d in data])
+        camera2lidar = torch.stack([d['camera2lidar'].data for d in data])
+        lidar2image = torch.stack([d['lidar2image'].data for d in data])
+        img_aug_matrix = torch.stack([d['img_aug_matrix'].data for d in data])
+        lidar_aug_matrix = torch.stack([d['lidar_aug_matrix'].data for d in data])
+        metas=[d['metas'].data for d in data]
+        
+        batch = dict(
+            img=imgs,
+            gt_bboxes_3d=gt_bboxes_3d,
+            gt_labels_3d=gt_labels_3d,
+            points=[],
+            camera_intrinsics = camera_intrinsics,
+            camera2ego = camera2ego,
+            lidar2ego = lidar2ego,
+            ego2global=ego2global,
+            lidar2camera = lidar2camera,
+            camera2lidar = camera2lidar,
+            lidar2image = lidar2image,
+            img_aug_matrix = img_aug_matrix,
+            lidar_aug_matrix = lidar_aug_matrix,
+            metas=metas
         )
 
-        if jsonfile_prefix is None:
-            tmp_dir = tempfile.TemporaryDirectory()
-            jsonfile_prefix = osp.join(tmp_dir.name, "results")
-        else:
-            tmp_dir = None
-
-        result_files = self._format_bbox(results, jsonfile_prefix)
-        return result_files, tmp_dir
-
-    def evaluate_map(self, results):
-        thresholds = torch.tensor([0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65])
-
-        num_classes = len(self.map_classes)
-        num_thresholds = len(thresholds)
-
-        tp = torch.zeros(num_classes, num_thresholds)
-        fp = torch.zeros(num_classes, num_thresholds)
-        fn = torch.zeros(num_classes, num_thresholds)
-
-        for result in results:
-            pred = result["masks_bev"]
-            label = result["gt_masks_bev"]
-
-            pred = pred.detach().reshape(num_classes, -1)
-            label = label.detach().bool().reshape(num_classes, -1)
-
-            pred = pred[:, :, None] >= thresholds
-            label = label[:, :, None]
-
-            tp += (pred & label).sum(dim=1)
-            fp += (pred & ~label).sum(dim=1)
-            fn += (~pred & label).sum(dim=1)
-
-        ious = tp / (tp + fp + fn + 1e-7)
-
-        metrics = {}
-        for index, name in enumerate(self.map_classes):
-            metrics[f"map/{name}/iou@max"] = ious[index].max().item()
-            for threshold, iou in zip(thresholds, ious[index]):
-                metrics[f"map/{name}/iou@{threshold.item():.2f}"] = iou.item()
-        metrics["map/mean/iou@max"] = ious.max(dim=1).values.mean().item()
-        return metrics
-
-    def evaluate(
-        self,
-        results,
-        metric="bbox",
-        jsonfile_prefix=None,
-        result_names=["pts_bbox"],
-        **kwargs,
-    ):
-        """Evaluation in nuScenes protocol.
-
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
-
-        Returns:
-            dict[str, float]: Results of each evaluation metric.
-        """
-
-        metrics = {}
-
-        if "masks_bev" in results[0]:
-            metrics.update(self.evaluate_map(results))
-
-        if "boxes_3d" in results[0]:
-            result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
-
-            if isinstance(result_files, dict):
-                for name in result_names:
-                    print("Evaluating bboxes of {}".format(name))
-                    ret_dict = self._evaluate_single(result_files[name])
-                metrics.update(ret_dict)
-            elif isinstance(result_files, str):
-                metrics.update(self._evaluate_single(result_files))
-
-            if tmp_dir is not None:
-                tmp_dir.cleanup()
-
-        return metrics
-
-
-def output_to_nusc_box(detection):
-    """Convert the output to the box class in the nuScenes.
-
-    Args:
-        detection (dict): Detection results.
-
-            - boxes_3d (:obj:`BaseInstance3DBoxes`): Detection bbox.
-            - scores_3d (torch.Tensor): Detection scores.
-            - labels_3d (torch.Tensor): Predicted box labels.
-
-    Returns:
-        list[:obj:`NuScenesBox`]: List of standard NuScenesBoxes.
-    """
-    box3d = detection["boxes_3d"]
-    scores = detection["scores_3d"].numpy()
-    labels = detection["labels_3d"].numpy()
-
-    box_gravity_center = box3d.gravity_center.numpy()
-    box_dims = box3d.dims.numpy()
-    box_yaw = box3d.yaw.numpy()
-    # TODO: check whether this is necessary
-    # with dir_offset & dir_limit in the head
-    box_yaw = -box_yaw - np.pi / 2
-
-    box_list = []
-    for i in range(len(box3d)):
-        quat = pyquaternion.Quaternion(axis=[0, 0, 1], radians=box_yaw[i])
-        velocity = (*box3d.tensor[i, 7:9], 0.0)
-        # velo_val = np.linalg.norm(box3d[i, 7:9])
-        # velo_ori = box3d[i, 6]
-        # velocity = (
-        # velo_val * np.cos(velo_ori), velo_val * np.sin(velo_ori), 0.0)
-        box = NuScenesBox(
-            box_gravity_center[i],
-            box_dims[i],
-            quat,
-            label=labels[i],
-            score=scores[i],
-            velocity=velocity,
-        )
-        box_list.append(box)
-    return box_list
-
-
-def lidar_nusc_box_to_global(
-    info, boxes, classes, eval_configs, eval_version="detection_cvpr_2019"
-):
-    """Convert the box from ego to global coordinate.
-
-    Args:
-        info (dict): Info for a specific sample data, including the
-            calibration information.
-        boxes (list[:obj:`NuScenesBox`]): List of predicted NuScenesBoxes.
-        classes (list[str]): Mapped classes in the evaluation.
-        eval_configs : Evaluation configuration object.
-        eval_version (str): Evaluation version.
-            Default: 'detection_cvpr_2019'
-
-    Returns:
-        list: List of standard NuScenesBoxes in the global
-            coordinate.
-    """
-    box_list = []
-    for box in boxes:
-        # Move box to ego vehicle coord system
-        box.rotate(pyquaternion.Quaternion(info["lidar2ego_rotation"]))
-        box.translate(np.array(info["lidar2ego_translation"]))
-
-        # filter det in ego.
-        cls_range_map = eval_configs.class_range
-        radius = np.linalg.norm(box.center[:2], 2)
-        det_range = cls_range_map[classes[box.label]]
-        if radius > det_range:
-            continue
-        # Move box to global coord system
-        box.rotate(pyquaternion.Quaternion(info["ego2global_rotation"]))
-        box.translate(np.array(info["ego2global_translation"]))
-        box_list.append(box)
-    return box_list
+        return batch

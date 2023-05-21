@@ -65,8 +65,8 @@ def main(args):
         res = Trainer.test(cfg, model)
         # if cfg.TEST.AUG.ENABLED:
         #     res.update(Trainer.test_with_TTA(cfg, model))
-        if comm.is_main_process():
-            verify_results(cfg, res)
+        # if comm.is_main_process():
+        #     verify_results(cfg, res)
         return res
 
     """

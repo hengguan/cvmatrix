@@ -627,9 +627,9 @@ Alternatively, you can call evaluation functions yourself (see Colab balloon tut
             ), "Evaluator must return a dict on the main process. Got {} instead.".format(
                 results_i
             )
-            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
-            print_csv_format(results)
-
+            # logger.info("Evaluation results for {} in csv format:".format(dataset_name))
+            # print_csv_format(results)
+        logger.info("Evaluation finished...")
         # if len(results) == 1:
         #     results = list(results.values())[0]
         return results
